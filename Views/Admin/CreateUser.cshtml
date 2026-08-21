@@ -1,0 +1,165 @@
+@model RayanTask.Models.NameItem
+
+@{
+    ViewData["Title"] = "ثبت کاربر جدید";
+}
+
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                        <i class="bi bi-person-plus text-indigo-600"></i>
+                        ثبت کاربر جدید
+                    </h1>
+                    <p class="text-gray-600 mt-2">افزودن کاربر جدید به سیستم</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="@Url.Action("Dashboard", "Home")" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors duration-200">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>داشبورد</span>
+                    </a>
+                    <a href="@Url.Action("Users", "Admin")" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors duration-200">
+                        <i class="bi bi-arrow-right"></i>
+                        <span>بازگشت</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="mb-6 bg-red-50 border-r-4 border-red-500 text-red-800 px-4 py-3 rounded-lg flex items-center gap-3 shadow-sm">
+                <i class="bi bi-exclamation-triangle-fill text-xl"></i>
+                <div class="flex-1">@TempData["ErrorMessage"]</div>
+            </div>
+        }
+
+        <form asp-action="CreateUser" method="post" class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+            @Html.AntiForgeryToken()
+            
+            <div class="space-y-6">
+                <!-- Basic Information -->
+                <div>
+                    <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                        <i class="bi bi-info-circle text-indigo-600 text-xl"></i>
+                        <h2 class="text-xl font-semibold text-gray-900">اطلاعات پایه</h2>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                <i class="bi bi-person text-indigo-600"></i>
+                                نام <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" asp-for="FirstName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                <i class="bi bi-person-badge text-indigo-600"></i>
+                                نام خانوادگی <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" asp-for="LastName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                <i class="bi bi-key text-indigo-600"></i>
+                                رمز عبور <span class="text-red-500">*</span>
+                            </label>
+                            <input type="password" name="Password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Permissions -->
+                <div>
+                    <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                        <i class="bi bi-shield-check text-indigo-600 text-xl"></i>
+                        <h2 class="text-xl font-semibold text-gray-900">دسترسی‌ها</h2>
+                    </div>
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" asp-for="IsAdmin" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                            <span class="text-sm font-medium text-gray-700">مدیر سیستم</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" asp-for="CanEdit" checked class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                            <span class="text-sm font-medium text-gray-700">دسترسی ویرایش</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" asp-for="CanDelete" checked class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                            <span class="text-sm font-medium text-gray-700">دسترسی حذف</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" asp-for="CanSelectAnyDate" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                            <span class="text-sm font-medium text-gray-700">دسترسی انتخاب هر تاریخی</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Section Permissions -->
+                <div>
+                    <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                        <i class="bi bi-gear text-indigo-600 text-xl"></i>
+                        <h2 class="text-xl font-semibold text-gray-900">دسترسی‌های بخشی</h2>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" asp-for="CanManageUsers" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                            <span class="text-sm font-medium text-gray-700">مدیریت کاربران</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" asp-for="CanManageActivityTypes" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                            <span class="text-sm font-medium text-gray-700">مدیریت نوع فعالیت</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" asp-for="CanManageResults" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                            <span class="text-sm font-medium text-gray-700">مدیریت نتیجه</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" asp-for="CanViewReports" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                            <span class="text-sm font-medium text-gray-700">مشاهده گزارش‌ها</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" asp-for="CanViewLogs" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                            <span class="text-sm font-medium text-gray-700">مشاهده لاگ‌ها</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" asp-for="CanViewActivityList" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                            <span class="text-sm font-medium text-gray-700">مشاهده لیست فعالیت‌ها</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" asp-for="CanViewIssueDetails" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                            <span class="text-sm font-medium text-gray-700">مشاهده جزئیات مشکلات</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" asp-for="CanEditIssues" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                            <span class="text-sm font-medium text-gray-700">ویرایش مشکلات</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" asp-for="CanDeleteIssues" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                            <span class="text-sm font-medium text-gray-700">حذف مشکلات</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" asp-for="CanDeleteReports" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                            <span class="text-sm font-medium text-gray-700">حذف از گزارش‌ها</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-gray-200">
+                    <a href="@Url.Action("Users", "Admin")" class="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors duration-200 text-center">
+                        انصراف
+                    </a>
+                    <button type="submit" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg">
+                        <i class="bi bi-check-circle ml-2"></i>ذخیره
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

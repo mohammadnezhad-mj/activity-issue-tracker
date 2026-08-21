@@ -1,0 +1,576 @@
+@model RayanTask.Controllers.IssuesIndexViewModel
+
+@{
+    ViewData["Title"] = "مشکلات و درخواست‌ها";
+    var hasActiveFilters = !string.IsNullOrWhiteSpace(Model.SearchTerm)
+        || !string.IsNullOrWhiteSpace(Model.StatusFilter)
+        || !string.IsNullOrWhiteSpace(Model.SoftwareFilter)
+        || !string.IsNullOrWhiteSpace(Model.AssignedToFilter)
+        || !string.IsNullOrWhiteSpace(Model.CustomerNameFilter)
+        || !string.IsNullOrWhiteSpace(Model.PriorityFilter)
+        || !string.IsNullOrWhiteSpace(Model.SeverityFilter)
+        || !string.IsNullOrWhiteSpace(Model.EnvironmentFilter)
+        || !string.IsNullOrWhiteSpace(Model.GitStatusFilter)
+        || !string.IsNullOrWhiteSpace(Model.WorkItemTypeFilter)
+        || !string.IsNullOrWhiteSpace(Model.BranchFilter)
+        || !string.IsNullOrWhiteSpace(Model.DateFrom)
+        || !string.IsNullOrWhiteSpace(Model.DateTo)
+        || Model.UnassignedOnly
+        || Model.MyItemsOnly
+        || Model.OverdueOnly;
+}
+
+@functions {
+    private static string EmptyText(string? value) => string.IsNullOrWhiteSpace(value) ? "-" : value;
+    private static string FormatFullDateTime(DateTime date) => date.ToString("yyyy/MM/dd HH:mm");
+
+    private static string FormatAge(DateTime date)
+    {
+        var span = DateTime.Now - date;
+        if (span.TotalDays >= 1) return $"{(int)span.TotalDays} روز";
+        if (span.TotalHours >= 1) return $"{(int)span.TotalHours} ساعت";
+        return $"{Math.Max(1, (int)span.TotalMinutes)} دقیقه";
+    }
+
+    private static string StatusClass(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status)) return "bg-gray-100 text-gray-800 border-gray-200";
+        if (status.Contains("تکمیل")) return "bg-emerald-50 text-emerald-800 border-emerald-200";
+        if (status.Contains("انجام")) return "bg-sky-50 text-sky-800 border-sky-200";
+        if (status.Contains("بررسی")) return "bg-amber-50 text-amber-800 border-amber-200";
+        if (status.Contains("لغو")) return "bg-rose-50 text-rose-800 border-rose-200";
+        return "bg-slate-50 text-slate-800 border-slate-200";
+    }
+
+    private static string PriorityClass(string? priority) => priority switch
+    {
+        "Urgent" => "bg-rose-50 text-rose-800 border-rose-200",
+        "High" => "bg-orange-50 text-orange-800 border-orange-200",
+        "Medium" => "bg-blue-50 text-blue-800 border-blue-200",
+        "Low" => "bg-slate-50 text-slate-700 border-slate-200",
+        _ => "bg-gray-50 text-gray-600 border-gray-200"
+    };
+
+    private static string SeverityClass(string? severity) => severity switch
+    {
+        "Critical" => "bg-red-50 text-red-800 border-red-200",
+        "Major" => "bg-violet-50 text-violet-800 border-violet-200",
+        "Minor" => "bg-teal-50 text-teal-800 border-teal-200",
+        _ => "bg-gray-50 text-gray-600 border-gray-200"
+    };
+
+    private static string DueClass(RayanTask.Models.SoftwareIssue issue)
+    {
+        if (!issue.DueDate.HasValue) return "bg-gray-50 text-gray-600 border-gray-200";
+        if (issue.Status.Contains("تکمیل") || issue.Status.Contains("لغو")) return "bg-slate-50 text-slate-700 border-slate-200";
+
+        var days = (issue.DueDate.Value.Date - DateTime.Now.Date).Days;
+        if (days < 0) return "bg-rose-50 text-rose-800 border-rose-200";
+        if (days <= 1) return "bg-amber-50 text-amber-800 border-amber-200";
+        return "bg-emerald-50 text-emerald-800 border-emerald-200";
+    }
+
+    private static string DueText(RayanTask.Models.SoftwareIssue issue)
+    {
+        if (!issue.DueDate.HasValue) return "-";
+        var date = issue.DueDate.Value.ToString("yyyy/MM/dd");
+        if (issue.Status.Contains("تکمیل") || issue.Status.Contains("لغو")) return date;
+
+        var days = (issue.DueDate.Value.Date - DateTime.Now.Date).Days;
+        if (days < 0) return $"{date} / {Math.Abs(days)} روز تاخیر";
+        if (days == 0) return $"{date} / امروز";
+        if (days == 1) return $"{date} / فردا";
+        return $"{date} / {days} روز";
+    }
+
+    private static string QueueClass(string? activeQueue, string queue)
+    {
+        var normalized = string.IsNullOrWhiteSpace(activeQueue) ? "my" : activeQueue;
+        return normalized == queue
+            ? "bg-indigo-600 text-white border-indigo-600"
+            : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50";
+    }
+}
+
+<div class="min-h-screen bg-gray-100" dir="rtl">
+    <div class="bg-white border-b border-gray-200">
+        <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-5">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                        <i class="bi bi-kanban text-indigo-600"></i>
+                        میز کار درخواست‌ها
+                    </h1>
+                    <p class="text-gray-600 mt-1">نمای عملیاتی برای پیگیری سریع کارهای پشتیبانی و IT</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="@Url.Action("Dashboard", "Home")" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium rounded-lg border border-gray-200 transition-colors duration-200">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>داشبورد</span>
+                    </a>
+                    <a href="@Url.Action("Create", "Issues")" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>ثبت مورد جدید</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="mb-5 bg-green-50 border-r-4 border-green-500 text-green-800 px-4 py-3 rounded-lg flex items-center gap-3 shadow-sm">
+                <i class="bi bi-check-circle-fill text-xl"></i>
+                <div class="flex-1">@TempData["SuccessMessage"]</div>
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="mb-5 bg-red-50 border-r-4 border-red-500 text-red-800 px-4 py-3 rounded-lg flex items-center gap-3 shadow-sm">
+                <i class="bi bi-exclamation-triangle-fill text-xl"></i>
+                <div class="flex-1">@TempData["ErrorMessage"]</div>
+            </div>
+        }
+
+        <div class="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-5">
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm px-4 py-3">
+                <p class="text-xs font-medium text-gray-500">باز</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">@Model.OpenCount</p>
+            </div>
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm px-4 py-3">
+                <p class="text-xs font-medium text-gray-500">بدون مسئول</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">@Model.UnassignedCount</p>
+            </div>
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm px-4 py-3">
+                <p class="text-xs font-medium text-gray-500">فوری / زیاد</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">@Model.UrgentCount</p>
+            </div>
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm px-4 py-3">
+                <p class="text-xs font-medium text-gray-500">تاخیرخورده</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">@Model.OverdueCount</p>
+            </div>
+            <div class="bg-white rounded-lg border border-indigo-100 shadow-sm px-4 py-3">
+                <p class="text-xs font-medium text-indigo-600">کارهای من</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">@Model.MyItemsCount</p>
+            </div>
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm px-4 py-3">
+                <p class="text-xs font-medium text-gray-500">ثبت‌شده‌های من</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">@Model.ReportedByMeCount</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-5 p-3">
+            <div class="flex flex-wrap gap-2">
+                <a href="@Url.Action("Index", "Issues", new { queue = "my" })" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors @QueueClass(Model.Queue, "my")">
+                    <i class="bi bi-person-check"></i>
+                    <span>کارهای من</span>
+                </a>
+                <a href="@Url.Action("Index", "Issues", new { queue = "reported" })" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors @QueueClass(Model.Queue, "reported")">
+                    <i class="bi bi-person-lines-fill"></i>
+                    <span>ثبت‌شده‌های من</span>
+                </a>
+                <a href="@Url.Action("Index", "Issues", new { queue = "support" })" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors @QueueClass(Model.Queue, "support")">
+                    <i class="bi bi-headset"></i>
+                    <span>Support Queue</span>
+                </a>
+                <a href="@Url.Action("Index", "Issues", new { queue = "it" })" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors @QueueClass(Model.Queue, "it")">
+                    <i class="bi bi-code-slash"></i>
+                    <span>IT Queue</span>
+                </a>
+                <a href="@Url.Action("Index", "Issues", new { queue = "unassigned" })" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors @QueueClass(Model.Queue, "unassigned")">
+                    <i class="bi bi-person-dash"></i>
+                    <span>بدون مسئول</span>
+                </a>
+                <a href="@Url.Action("Index", "Issues", new { queue = "urgent" })" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors @QueueClass(Model.Queue, "urgent")">
+                    <i class="bi bi-exclamation-octagon"></i>
+                    <span>فوری</span>
+                </a>
+                <a href="@Url.Action("Index", "Issues", new { queue = "overdue" })" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors @QueueClass(Model.Queue, "overdue")">
+                    <i class="bi bi-clock-history"></i>
+                    <span>تاخیرخورده</span>
+                </a>
+                <a href="@Url.Action("Index", "Issues", new { queue = "all" })" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors @QueueClass(Model.Queue, "all")">
+                    <i class="bi bi-grid"></i>
+                    <span>همه</span>
+                </a>
+            </div>
+        </div>
+
+        <details class="bg-white rounded-lg shadow-sm border border-gray-200 mb-5" @(hasActiveFilters ? "open" : "")>
+            <summary class="px-5 py-4 flex cursor-pointer list-none items-center justify-between gap-3">
+                <span class="text-base font-semibold text-gray-900 flex items-center gap-2">
+                    <i class="bi bi-funnel text-indigo-600"></i>
+                    فیلترها
+                    @if (hasActiveFilters)
+                    {
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs">فعال</span>
+                    }
+                </span>
+                <span class="flex items-center gap-3">
+                    <a href="@Url.Action("Index", "Issues", new { queue = Model.Queue })" class="text-sm text-gray-600 hover:text-gray-900">پاک کردن فیلترها</a>
+                    <i class="bi bi-chevron-down text-gray-500"></i>
+                </span>
+            </summary>
+            <div class="p-5 border-t border-gray-200">
+                <form method="get" action="@Url.Action("Index", "Issues")" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
+                    <input type="hidden" name="queue" value="@Model.Queue" />
+                    <div class="md:col-span-2 xl:col-span-2">
+                        <label class="block text-xs font-medium text-gray-600 mb-1">جستجوی آزاد</label>
+                        <input type="text" name="searchTerm" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" value="@Model.SearchTerm" placeholder="عنوان، شرح، مشتری، لینک کانال..." />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">وضعیت</label>
+                        <select name="statusFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <option value="">همه</option>
+                            @foreach (var status in Model.StatusOptions)
+                            {
+                                <option value="@status" selected="@(Model.StatusFilter == status ? "selected" : null)">@status</option>
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">نرم‌افزار</label>
+                        <select name="softwareFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <option value="">همه</option>
+                            @foreach (var software in Model.SoftwareNames)
+                            {
+                                <option value="@software" selected="@(Model.SoftwareFilter == software ? "selected" : null)">@software</option>
+                            }
+                        </select>
+                    </div>
+                    @if (Model.IsAdmin)
+                    {
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">مسئول</label>
+                            <select name="assignedToFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                <option value="">همه</option>
+                                @foreach (var user in Model.ActiveUsers)
+                                {
+                                    var fullName = $"{user.FirstName} {user.LastName}";
+                                    <option value="@fullName" selected="@(Model.AssignedToFilter == fullName ? "selected" : null)">@fullName</option>
+                                }
+                            </select>
+                        </div>
+                    }
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">مشتری</label>
+                        <input type="text" name="customerNameFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" value="@Model.CustomerNameFilter" placeholder="جستجو..." />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Priority</label>
+                        <select name="priorityFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <option value="">همه</option>
+                            @foreach (var priority in new[] { "Low", "Medium", "High", "Urgent" })
+                            {
+                                <option value="@priority" selected="@(Model.PriorityFilter == priority ? "selected" : null)">@priority</option>
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Severity</label>
+                        <select name="severityFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <option value="">همه</option>
+                            @foreach (var severity in new[] { "Minor", "Major", "Critical" })
+                            {
+                                <option value="@severity" selected="@(Model.SeverityFilter == severity ? "selected" : null)">@severity</option>
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Environment</label>
+                        <select name="environmentFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <option value="">همه</option>
+                            @foreach (var environment in new[] { "Production", "Test", "Development" })
+                            {
+                                <option value="@environment" selected="@(Model.EnvironmentFilter == environment ? "selected" : null)">@environment</option>
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">GitStatus</label>
+                        <select name="gitStatusFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <option value="">همه</option>
+                            @foreach (var gitStatus in new[] { "Opened", "In Progress", "Reviewed", "Merged", "Closed", "Failed", "Deployed" })
+                            {
+                                <option value="@gitStatus" selected="@(Model.GitStatusFilter == gitStatus ? "selected" : null)">@gitStatus</option>
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">WorkItemType</label>
+                        <select name="workItemTypeFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <option value="">همه</option>
+                            @foreach (var workItemType in new[] { "Issue", "Pull Request", "Merge Request", "Commit", "Pipeline", "Release", "Other" })
+                            {
+                                <option value="@workItemType" selected="@(Model.WorkItemTypeFilter == workItemType ? "selected" : null)">@workItemType</option>
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">BranchName</label>
+                        <input type="text" name="branchFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" value="@Model.BranchFilter" placeholder="feature/login" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">از تاریخ</label>
+                        <input type="date" name="dateFrom" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" value="@Model.DateFrom" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">تا تاریخ</label>
+                        <input type="date" name="dateTo" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" value="@Model.DateTo" />
+                    </div>
+                    <div class="md:col-span-2 xl:col-span-6 flex flex-wrap items-center justify-between gap-3 pt-2">
+                        <div class="flex flex-wrap gap-4">
+                            <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                                <input type="checkbox" name="unassignedOnly" value="true" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked="@Model.UnassignedOnly" />
+                                فقط بدون مسئول
+                            </label>
+                            <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                                <input type="checkbox" name="overdueOnly" value="true" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked="@Model.OverdueOnly" />
+                                فقط تاخیرخورده
+                            </label>
+                            <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                                <input type="checkbox" name="myItemsOnly" value="true" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked="@Model.MyItemsOnly" />
+                                فقط کارهای من
+                            </label>
+                        </div>
+                        <button type="submit" class="inline-flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200">
+                            <i class="bi bi-search"></i>
+                            <span>اعمال فیلتر</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </details>
+
+        <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <h2 class="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <i class="bi bi-list-check text-indigo-600"></i>
+                موارد یافت‌شده
+            </h2>
+            <span class="text-sm text-gray-600">@Model.Issues.Count مورد</span>
+        </div>
+
+        @if (Model.Issues.Any())
+        {
+            <div class="space-y-4">
+                @foreach (var issue in Model.Issues)
+                {
+                    var lastActivity = Model.LastActivityAt.TryGetValue(issue.Id, out var last) ? last : issue.CreatedAt;
+                    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+                    var currentFirstName = Context.Session.GetString("FirstName") ?? "";
+                    var currentLastName = Context.Session.GetString("LastName") ?? "";
+                    var isCurrentUserAssigned = issue.AssignedToFirstName == currentFirstName && issue.AssignedToLastName == currentLastName;
+                    var canUseQuickActions = Model.IsAdmin || isCurrentUserAssigned;
+                    var issueLayoutClass = canUseQuickActions ? "grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px]" : "grid grid-cols-1";
+                    <article class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="@issueLayoutClass">
+                            <div class="p-5">
+                                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <div class="flex flex-wrap items-center gap-2 mb-2">
+                                            <a href="@Url.Action("Details", "Issues", new { id = issue.Id, returnUrl })" class="font-bold text-indigo-700 hover:text-indigo-900 whitespace-nowrap">#@issue.Id</a>
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border @StatusClass(issue.Status)">@issue.Status</span>
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border @PriorityClass(issue.Priority)">@EmptyText(issue.Priority)</span>
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border @SeverityClass(issue.Severity)">@EmptyText(issue.Severity)</span>
+                                        </div>
+                                        <a href="@Url.Action("Details", "Issues", new { id = issue.Id, returnUrl })" class="block text-lg font-bold text-gray-900 hover:text-indigo-700 leading-7">
+                                            @issue.Title
+                                        </a>
+                                        <div class="mt-3 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-3 text-sm">
+                                            <div>
+                                                <div class="text-xs text-gray-500 mb-1">مشتری</div>
+                                                <div class="font-medium text-gray-900">@EmptyText(issue.CustomerName)</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-xs text-gray-500 mb-1">نرم‌افزار / نوع</div>
+                                                <div class="font-medium text-gray-900">@issue.SoftwareName</div>
+                                                <div class="text-xs text-gray-500 mt-1">@issue.IssueType</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-xs text-gray-500 mb-1">SLA / موعد</div>
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border whitespace-nowrap @DueClass(issue)">@DueText(issue)</span>
+                                            </div>
+                                            <div>
+                                                <div class="text-xs text-gray-500 mb-1">آخرین بروزرسانی</div>
+                                                <div class="font-medium text-gray-900 whitespace-nowrap">@FormatFullDateTime(lastActivity)</div>
+                                                <div class="text-xs text-gray-500 mt-1">ثبت: @FormatFullDateTime(issue.CreatedAt)</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-4 flex flex-wrap gap-2 text-xs text-gray-600">
+                                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-50 border border-gray-200">
+                                                <i class="bi bi-clock"></i>
+                                                عمر: @FormatAge(issue.CreatedAt)
+                                            </span>
+                                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-50 border border-gray-200">
+                                                <i class="bi bi-hdd-network"></i>
+                                                @EmptyText(issue.Environment)
+                                            </span>
+                                            @if (!string.IsNullOrWhiteSpace(issue.ReportedChannel))
+                                            {
+                                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-50 border border-gray-200">
+                                                    <i class="bi bi-megaphone"></i>
+                                                    @issue.ReportedChannel
+                                                </span>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(issue.ReportedChannelUrl))
+                                            {
+                                                <a href="@issue.ReportedChannelUrl" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-100">
+                                                    <i class="bi bi-link-45deg"></i>
+                                                    لینک کانال
+                                                </a>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(issue.BranchName) || !string.IsNullOrWhiteSpace(issue.WorkItemType) || !string.IsNullOrWhiteSpace(issue.GitStatus))
+                                            {
+                                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-50 border border-slate-200">
+                                                    <i class="bi bi-git"></i>
+                                                    @EmptyText(issue.BranchName)
+                                                    @if (!string.IsNullOrWhiteSpace(issue.WorkItemType))
+                                                    {
+                                                        <span>/ @issue.WorkItemType</span>
+                                                    }
+                                                    @if (!string.IsNullOrWhiteSpace(issue.GitStatus))
+                                                    {
+                                                        <span>/ @issue.GitStatus</span>
+                                                    }
+                                                </span>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(issue.RepositoryUrl))
+                                            {
+                                                <a href="@issue.RepositoryUrl" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-100">Repo</a>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(issue.CommitUrl))
+                                            {
+                                                <a href="@issue.CommitUrl" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-100">Commit</a>
+                                            }
+                                        </div>
+                                    </div>
+                                    @if (!canUseQuickActions)
+                                    {
+                                        <div class="shrink-0">
+                                            <a href="@Url.Action("Details", "Issues", new { id = issue.Id, returnUrl })" class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
+                                                <i class="bi bi-eye"></i>
+                                                <span>مشاهده</span>
+                                            </a>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            @if (canUseQuickActions)
+                            {
+                                <aside class="bg-slate-50 border-t xl:border-t-0 xl:border-r border-gray-200 p-4">
+                                    <div class="mb-4">
+                                        <div class="text-xs text-gray-500 mb-1">مسئول</div>
+                                        @if (!string.IsNullOrWhiteSpace(issue.AssignedToFirstName))
+                                        {
+                                            <div class="font-semibold text-gray-900">@issue.AssignedToFirstName @issue.AssignedToLastName</div>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-medium">بدون مسئول</span>
+                                        }
+                                        <div class="text-xs text-gray-500 mt-1">ثبت‌کننده: @issue.ReporterFirstName @issue.ReporterLastName</div>
+                                    </div>
+
+                                    <div class="flex flex-wrap items-center gap-2 mb-3">
+                                        <a href="@Url.Action("Details", "Issues", new { id = issue.Id, returnUrl })" class="inline-flex items-center justify-center w-9 h-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200" title="مشاهده">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        @if (Model.CanEditIssues || Model.IsAdmin || isCurrentUserAssigned)
+                                        {
+                                            <a href="@Url.Action("Edit", "Issues", new { id = issue.Id, returnUrl })" class="inline-flex items-center justify-center w-9 h-9 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors duration-200" title="ویرایش">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        }
+                                        <form asp-action="QuickStart" method="post" class="inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="issueId" value="@issue.Id" />
+                                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                            <button type="submit" class="inline-flex items-center justify-center w-9 h-9 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors duration-200" title="شروع کار">
+                                                <i class="bi bi-play-fill"></i>
+                                            </button>
+                                        </form>
+                                        <form asp-action="QuickComplete" method="post" class="inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="issueId" value="@issue.Id" />
+                                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                            <button type="submit" class="inline-flex items-center justify-center w-9 h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors duration-200" title="تکمیل کار">
+                                                <i class="bi bi-check2"></i>
+                                            </button>
+                                        </form>
+                                        @if (Model.CanDeleteIssues || Model.IsAdmin)
+                                        {
+                                            <form asp-action="Delete" method="post" class="inline" onsubmit="return confirm('آیا از حذف این مورد اطمینان دارید؟');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@issue.Id" />
+                                                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                                <button type="submit" class="inline-flex items-center justify-center w-9 h-9 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200" title="حذف">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <form asp-action="QuickUpdateStatus" method="post" class="flex gap-2">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="issueId" value="@issue.Id" />
+                                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                            <select name="status" class="min-w-0 flex-1 px-2 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                                @foreach (var status in Model.StatusOptions)
+                                                {
+                                                    <option value="@status" selected="@(issue.Status == status ? "selected" : null)">@status</option>
+                                                }
+                                            </select>
+                                            <button type="submit" class="inline-flex items-center justify-center w-9 h-9 bg-gray-800 hover:bg-gray-900 text-white rounded-lg" title="ثبت وضعیت">
+                                                <i class="bi bi-arrow-repeat"></i>
+                                            </button>
+                                        </form>
+
+                                        <form asp-action="QuickAssign" method="post" class="flex gap-2">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="issueId" value="@issue.Id" />
+                                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                            <select name="assignedToId" class="min-w-0 flex-1 px-2 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                                <option value="">بدون مسئول</option>
+                                                @foreach (var user in Model.ActiveIssueUsers)
+                                                {
+                                                    <option value="@user.Id" selected="@(issue.AssignedToId == user.Id ? "selected" : null)">@user.FirstName @user.LastName</option>
+                                                }
+                                            </select>
+                                            <button type="submit" class="inline-flex items-center justify-center w-9 h-9 bg-gray-800 hover:bg-gray-900 text-white rounded-lg" title="ثبت مسئول">
+                                                <i class="bi bi-person-check"></i>
+                                            </button>
+                                        </form>
+
+                                        <form asp-action="QuickAddComment" method="post" class="flex gap-2">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="issueId" value="@issue.Id" />
+                                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                            <input type="text" name="commentText" maxlength="2000" class="min-w-0 flex-1 px-2 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="کامنت کوتاه..." />
+                                            <button type="submit" class="inline-flex items-center justify-center w-9 h-9 bg-gray-800 hover:bg-gray-900 text-white rounded-lg" title="ثبت کامنت">
+                                                <i class="bi bi-chat-dots"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </aside>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-10">
+                <div class="text-center">
+                    <i class="bi bi-inbox text-6xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-700 text-lg">هیچ موردی با فیلترها یا صف فعلی یافت نشد.</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>

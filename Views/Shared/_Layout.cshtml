@@ -1,0 +1,87 @@
+﻿<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <meta name="theme-color" content="#6366f1" />
+    <title>@ViewData["Title"] - Ø³ÛŒØ³ØªÙ… Ù…Ø¯ÛŒØ±ÛŒØª ÙØ¹Ø§Ù„ÛŒØªâ€ŒÙ‡Ø§</title>
+    <script src="~/lib/tailwind/tailwind.min.js" asp-append-version="true"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/choices.js/choices.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/fonts/iran-sans/fontiran.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                    },
+                    fontFamily: {
+                        sans: ['IRANSansXFaNum', 'Tahoma', 'Arial', 'sans-serif']
+                    }
+                }
+            }
+        }
+        // RTL Support for Tailwind
+        if (document.documentElement.dir === 'rtl') {
+            document.documentElement.classList.add('rtl');
+        }
+    </script>
+</head>
+<body>
+    <!-- Navbar Ù…Ø®ÙÛŒ Ø´Ø¯Ù‡ Ø§Ø³Øª -->
+    <header style="display: none;">
+        <nav class="navbar navbar-expand-lg navbar-light">
+            <div class="container-fluid">
+                <a class="navbar-brand d-flex align-items-center" href="@Url.Action("Dashboard", "Home")">
+                    <i class="bi bi-clipboard-check"></i>
+                    <span>Ø³ÛŒØ³ØªÙ… Ù…Ø¯ÛŒØ±ÛŒØª ÙØ¹Ø§Ù„ÛŒØªâ€ŒÙ‡Ø§</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("Dashboard", "Home")">
+                                <i class="bi bi-speedometer2"></i> Ø¯Ø§Ø´Ø¨ÙˆØ±Ø¯
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("Index", "Home")">
+                                <i class="bi bi-house"></i> ØµÙØ­Ù‡ Ø§ØµÙ„ÛŒ
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("Index", "Issues")">
+                                <i class="bi bi-bug"></i> Ù…Ø´Ú©Ù„Ø§Øª Ùˆ Ù†Ø¸Ø±Ø§Øª
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("MyAssignedIssues", "Issues")">
+                                <i class="bi bi-person-check"></i> Ù…Ø´Ú©Ù„Ø§Øª Ù…Ù†
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <main role="main">
+        @RenderBody()
+    </main>
+
+    <script src="~/lib/jquery/jquery-3.7.0.min.js" asp-append-version="true"></script>
+    <script src="~/lib/bootstrap/bootstrap.bundle.min.js" asp-append-version="true"></script>
+    <script src="~/lib/choices.js/choices.min.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+
+
+
+
+
+

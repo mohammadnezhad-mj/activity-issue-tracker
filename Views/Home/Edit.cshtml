@@ -1,0 +1,278 @@
+@model RayanTask.Controllers.EditActivityViewModel
+
+@{
+    ViewData["Title"] = "ویرایش فعالیت";
+}
+
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                        <i class="bi bi-pencil-square text-indigo-600"></i>
+                        ویرایش فعالیت
+                    </h1>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="@Url.Action("Index", "Home")" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors duration-200">
+                        <i class="bi bi-arrow-right"></i>
+                        <span>بازگشت</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="mb-6 bg-red-50 border-r-4 border-red-500 text-red-800 px-4 py-3 rounded-lg flex items-center gap-3 shadow-sm">
+                <i class="bi bi-exclamation-triangle-fill text-xl"></i>
+                <div class="flex-1">@TempData["ErrorMessage"]</div>
+            </div>
+        }
+
+        <form asp-action="Edit" method="post" id="editForm" class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Record.Id" />
+            
+            <!-- Basic Information -->
+            <div class="mb-6">
+                <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                    <i class="bi bi-info-circle text-indigo-600 text-xl"></i>
+                    <h2 class="text-xl font-semibold text-gray-900">اطلاعات پایه</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                            <i class="bi bi-person"></i>
+                            نام و نام خانوادگی
+                        </label>
+                        <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50" value="@Model.Record.Name @Model.Record.LastName" readonly />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                            <i class="bi bi-calendar"></i>
+                            تاریخ <span class="text-red-500">*</span>
+                        </label>
+                        @{
+                            var today = DateTime.Now.Date;
+                            var yesterday = today.AddDays(-1);
+                            var recordDate = Model.Record.Date.Date;
+                        }
+                        @if (Model.CanSelectAnyDate)
+                        {
+                            <input type="date" name="Date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" value="@Model.Record.Date.ToString("yyyy-MM-dd")" required id="dateInput" />
+                            <p class="mt-1 text-xs text-gray-500">می‌توانید هر تاریخی را انتخاب کنید</p>
+                        }
+                        else
+                        {
+                            <select name="Date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required id="dateSelect">
+                                @if (recordDate == today)
+                                {
+                                    <option value="@today.ToString("yyyy-MM-dd")" selected>امروز (@today.ToString("yyyy/MM/dd") - @today.ToPersianDate())</option>
+                                    <option value="@yesterday.ToString("yyyy-MM-dd")">دیروز (@yesterday.ToString("yyyy/MM/dd") - @yesterday.ToPersianDate())</option>
+                                }
+                                else if (recordDate == yesterday)
+                                {
+                                    <option value="@today.ToString("yyyy-MM-dd")">امروز (@today.ToString("yyyy/MM/dd") - @today.ToPersianDate())</option>
+                                    <option value="@yesterday.ToString("yyyy-MM-dd")" selected>دیروز (@yesterday.ToString("yyyy/MM/dd") - @yesterday.ToPersianDate())</option>
+                                }
+                                else
+                                {
+                                    <option value="@today.ToString("yyyy-MM-dd")">امروز (@today.ToString("yyyy/MM/dd") - @today.ToPersianDate())</option>
+                                    <option value="@yesterday.ToString("yyyy-MM-dd")">دیروز (@yesterday.ToString("yyyy/MM/dd") - @yesterday.ToPersianDate())</option>
+                                }
+                            </select>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Details -->
+            <div class="mb-6">
+                <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                    <i class="bi bi-activity text-indigo-600 text-xl"></i>
+                    <h2 class="text-xl font-semibold text-gray-900">جزئیات فعالیت</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                            <i class="bi bi-activity"></i>
+                            نوع فعالیت <span class="text-red-500">*</span>
+                        </label>
+                        <select name="ActivityTypes" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" id="activityTypesSelect" multiple required>
+                            @{
+                                var selectedActivityTypeIds = Model.Record.ActivityTypes?.Select(at => at.Id).ToList() ?? new List<int>();
+                            }
+                            @foreach (var activityType in Model.Configuration.ActivityTypes)
+                            {
+                                @if (selectedActivityTypeIds.Contains(activityType.Id))
+                                {
+                                    <option value="@activityType.Id" selected>@activityType.Value</option>
+                                }
+                                else
+                                {
+                                    <option value="@activityType.Id">@activityType.Value</option>
+                                }
+                            }
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">می‌توانید چند نوع فعالیت را انتخاب کنید</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                            <i class="bi bi-check-circle"></i>
+                            نتیجه <span class="text-red-500">*</span>
+                        </label>
+                        <select name="ResultId" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required>
+                            <option value="">-- انتخاب کنید --</option>
+                            @foreach (var result in Model.Configuration.Results)
+                            {
+                                @if (result.Id == Model.Record.ResultId)
+                                {
+                                    <option value="@result.Id" selected>@result.Value</option>
+                                }
+                                else
+                                {
+                                    <option value="@result.Id">@result.Value</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                            <i class="bi bi-file-text"></i>
+                            شرح <span class="text-red-500">*</span>
+                        </label>
+                        <textarea name="Description" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" rows="4" maxlength="1000" id="descriptionText" placeholder="شرح فعالیت را وارد کنید..." required>@Model.Record.Description</textarea>
+                        <div class="flex justify-between items-center mt-1">
+                            <p class="text-xs text-gray-500">حداکثر 1000 کاراکتر</p>
+                            <div class="text-xs text-gray-500" id="charCount">@Model.Record.Description.Length / 1000</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="mb-6">
+                <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                    <i class="bi bi-list-check text-indigo-600 text-xl"></i>
+                    <h2 class="text-xl font-semibold text-gray-900">اطلاعات تکمیلی</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                            <i class="bi bi-clock"></i>
+                            مدت زمان (دقیقه) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" name="DurationMinutes" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" min="1" value="@Model.Record.DurationMinutes" required />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                            <i class="bi bi-people"></i>
+                            ذی‌نفع / مشتری <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="Stakeholder" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" value="@Model.Record.Stakeholder" placeholder="نام ذی‌نفع یا مشتری" required />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-gray-200">
+                <a href="@Url.Action("Index", "Home")" class="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors duration-200 text-center">
+                    <i class="bi bi-x-circle ml-2"></i>انصراف
+                </a>
+                <button type="submit" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg">
+                    <i class="bi bi-save ml-2"></i>ذخیره تغییرات
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const activityTypeSelect = document.querySelector('select[name="ActivityTypes"]');
+            if (activityTypeSelect) {
+                new Choices(activityTypeSelect, {
+                    searchEnabled: true,
+                    searchPlaceholderValue: 'جستجو...',
+                    itemSelectText: '',
+                    placeholder: 'انتخاب نوع فعالیت...',
+                    shouldSort: false,
+                    removeItemButton: true,
+                    maxItemCount: -1
+                });
+            }
+
+            const resultSelect = document.querySelector('select[name="Result"]');
+            if (resultSelect) {
+                new Choices(resultSelect, {
+                    searchEnabled: true,
+                    searchPlaceholderValue: 'جستجو...',
+                    itemSelectText: '',
+                    placeholder: false,
+                    shouldSort: false
+                });
+            }
+        });
+
+        const descriptionText = document.getElementById('descriptionText');
+        const charCount = document.getElementById('charCount');
+        
+        if (descriptionText) {
+            descriptionText.addEventListener('input', function() {
+                const count = this.value.length;
+                charCount.textContent = count + ' / 1000';
+                
+                if (count > 900) {
+                    charCount.classList.add('text-red-500');
+                } else {
+                    charCount.classList.remove('text-red-500');
+                }
+            });
+        }
+
+        const editForm = document.getElementById('editForm');
+        if (editForm) {
+            editForm.addEventListener('submit', function(e) {
+                const description = descriptionText.value;
+                if (!description || description.trim() === '') {
+                    e.preventDefault();
+                    alert('لطفاً شرح را وارد کنید.');
+                    descriptionText.focus();
+                    return false;
+                }
+                if (description.length > 1000) {
+                    e.preventDefault();
+                    alert('شرح نمی‌تواند بیشتر از 1000 کاراکتر باشد.');
+                    return false;
+                }
+
+                const dateInput = document.getElementById('dateInput');
+                const dateSelect = document.getElementById('dateSelect');
+                
+                if (dateSelect) {
+                    const selectedDate = new Date(dateSelect.value);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const yesterday = new Date(today);
+                    yesterday.setDate(yesterday.getDate() - 1);
+
+                    const selectedDateOnly = new Date(selectedDate);
+                    selectedDateOnly.setHours(0, 0, 0, 0);
+
+                    if (selectedDateOnly.getTime() !== today.getTime() && 
+                        selectedDateOnly.getTime() !== yesterday.getTime()) {
+                        e.preventDefault();
+                        alert('فقط می‌توانید تاریخ امروز یا دیروز را انتخاب کنید.');
+                        return false;
+                    }
+                }
+            });
+        }
+    </script>
+}

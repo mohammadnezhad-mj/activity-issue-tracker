@@ -1,0 +1,200 @@
+@{
+    ViewData["Title"] = "مدیریت سیستم";
+    var canManageUsers = Context.Session.GetString("CanManageUsers") == "true";
+    var canManageActivityTypes = Context.Session.GetString("CanManageActivityTypes") == "true";
+    var canManageResults = Context.Session.GetString("CanManageResults") == "true";
+    var canViewReports = Context.Session.GetString("CanViewReports") == "true";
+    var canViewLogs = Context.Session.GetString("CanViewLogs") == "true";
+    var isAdmin = Context.Session.GetString("IsAdmin") == "true";
+    
+    // اگر مدیر است و دسترسی صراحتاً false نشده، دسترسی دارد
+    if (isAdmin)
+    {
+        canManageUsers = Context.Session.GetString("CanManageUsers") != "false";
+        canManageActivityTypes = Context.Session.GetString("CanManageActivityTypes") != "false";
+        canManageResults = Context.Session.GetString("CanManageResults") != "false";
+        canViewReports = Context.Session.GetString("CanViewReports") != "false";
+        canViewLogs = Context.Session.GetString("CanViewLogs") != "false";
+    }
+}
+
+<div class="main-container">
+    <div class="page-header">
+        <div>
+            <h2><i class="bi bi-gear"></i>مدیریت سیستم</h2>
+            <p class="text-muted mb-0">مدیریت تنظیمات و دسترسی‌های سیستم</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="@Url.Action("Dashboard", "Home")" class="btn btn-outline-primary">
+                <i class="bi bi-speedometer2"></i>داشبورد
+            </a>
+            <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-right"></i>بازگشت
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center" role="alert">
+            <i class="bi bi-check-circle-fill"></i>
+            <div>@TempData["SuccessMessage"]</div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <div>@TempData["ErrorMessage"]</div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        @if (canManageUsers)
+        {
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="dashboard-card card">
+                    <div class="card-body text-center p-4">
+                        <div class="dashboard-icon bg-primary text-white mx-auto">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h5 class="card-title">مدیریت کاربران</h5>
+                        <p class="card-text text-muted">ثبت، ویرایش و مدیریت کاربران سیستم</p>
+                        <a href="@Url.Action("Users", "Admin")" class="btn btn-primary w-100">
+                                <i class="bi bi-arrow-left"></i>مشاهده
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+        @if (canManageActivityTypes)
+        {
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="dashboard-card card">
+                    <div class="card-body text-center p-4">
+                        <div class="dashboard-icon bg-success text-white mx-auto">
+                            <i class="bi bi-activity"></i>
+                        </div>
+                        <h5 class="card-title">مدیریت نوع فعالیت</h5>
+                        <p class="card-text text-muted">ثبت و مدیریت انواع فعالیت‌ها</p>
+                        <a href="@Url.Action("ActivityTypes", "Admin")" class="btn btn-success w-100 text-white">
+                                <i class="bi bi-arrow-left"></i>مشاهده
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+        @if (canManageResults)
+        {
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="dashboard-card card">
+                    <div class="card-body text-center p-4">
+                        <div class="dashboard-icon bg-info text-white mx-auto">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <h5 class="card-title">مدیریت نتیجه</h5>
+                        <p class="card-text text-muted">ثبت و مدیریت نتایج فعالیت‌ها</p>
+                        <a href="@Url.Action("Results", "Admin")" class="btn btn-info w-100 text-white">
+                                <i class="bi bi-arrow-left"></i>مشاهده
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+        @if (canManageActivityTypes)
+        {
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="dashboard-card card">
+                    <div class="card-body text-center p-4">
+                        <div class="dashboard-icon bg-primary text-white mx-auto">
+                            <i class="bi bi-laptop"></i>
+                        </div>
+                        <h5 class="card-title">مدیریت نام نرم افزارها</h5>
+                        <p class="card-text text-muted">ثبت و مدیریت نام نرم افزارهای شرکت</p>
+                        <a href="@Url.Action("SoftwareNames", "Admin")" class="btn btn-primary w-100">
+                                <i class="bi bi-arrow-left"></i>مشاهده
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+        @if (canManageActivityTypes)
+        {
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="dashboard-card card">
+                    <div class="card-body text-center p-4">
+                        <div class="dashboard-icon bg-success text-white mx-auto">
+                            <i class="bi bi-tags"></i>
+                        </div>
+                        <h5 class="card-title">مدیریت انواع مشکل/نظر</h5>
+                        <p class="card-text text-muted">ثبت و مدیریت انواع مشکل/نظر (باگ، بروزرسانی و ...)</p>
+                        <a href="@Url.Action("IssueTypes", "Admin")" class="btn btn-success w-100 text-white">
+                                <i class="bi bi-arrow-left"></i>مشاهده
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+        @if (canViewReports)
+        {
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="dashboard-card card">
+                    <div class="card-body text-center p-4">
+                        <div class="dashboard-icon bg-warning text-white mx-auto">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                        <h5 class="card-title">گزارش‌گیری</h5>
+                        <p class="card-text text-muted">گزارش‌گیری و فیلتر بر اساس تمام فیلدها</p>
+                        <a href="@Url.Action("Reports", "Admin")" class="btn btn-warning w-100 text-white">
+                                <i class="bi bi-arrow-left"></i>مشاهده
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+        @if (canViewLogs)
+        {
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="dashboard-card card">
+                    <div class="card-body text-center p-4">
+                        <div class="dashboard-icon bg-secondary text-white mx-auto">
+                            <i class="bi bi-journal-text"></i>
+                        </div>
+                        <h5 class="card-title">لاگ سیستم</h5>
+                        <p class="card-text text-muted">مشاهده تمام تغییرات و عملیات انجام شده</p>
+                        <a href="@Url.Action("Logs", "Admin")" class="btn btn-secondary w-100 text-white">
+                                <i class="bi bi-arrow-left"></i>مشاهده
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="dashboard-card card">
+                    <div class="card-body text-center p-4">
+                        <div class="dashboard-icon bg-danger text-white mx-auto">
+                            <i class="bi bi-shield-lock"></i>
+                        </div>
+                        <h5 class="card-title">مدیریت Rate Limit</h5>
+                        <p class="card-text text-muted">مشاهده و ریست کردن محدودیت‌های لاگین</p>
+                        <a href="@Url.Action("RateLimits", "Admin")" class="btn btn-danger w-100 text-white">
+                                <i class="bi bi-arrow-left"></i>مشاهده
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+        @if (!canManageUsers && !canManageActivityTypes && !canManageResults && !canViewReports && !canViewLogs)
+        {
+            <div class="col-12">
+                <div class="alert alert-warning text-center">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    شما به هیچ بخش مدیریتی دسترسی ندارید.
+                </div>
+            </div>
+        }
+    </div>
+</div>
+

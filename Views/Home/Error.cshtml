@@ -1,0 +1,54 @@
+@{
+    ViewData["Title"] = "خطا";
+    var exception = ViewData["Exception"] as Exception;
+    var requestId = ViewData["RequestId"] as string;
+}
+
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-lg p-8 max-w-2xl w-full">
+        <div class="text-center mb-6">
+            <i class="bi bi-exclamation-triangle-fill text-6xl text-red-500 mb-4"></i>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">خطا</h1>
+            <h2 class="text-xl text-gray-700 mb-4">یک خطا در پردازش درخواست شما رخ داده است.</h2>
+        </div>
+
+        @if (exception != null)
+        {
+            <div class="bg-red-50 border-r-4 border-red-500 p-4 rounded-lg mb-4">
+                <p class="font-semibold text-red-800 mb-2">جزئیات خطا:</p>
+                <p class="text-red-700 text-sm font-mono">@exception.Message</p>
+                @if (!string.IsNullOrEmpty(exception.StackTrace))
+                {
+                    <details class="mt-3">
+                        <summary class="text-red-700 cursor-pointer text-sm font-semibold">نمایش Stack Trace</summary>
+                        <pre class="mt-2 text-xs text-red-600 overflow-auto max-h-60 bg-red-100 p-3 rounded">@exception.StackTrace</pre>
+                    </details>
+                }
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(requestId))
+        {
+            <div class="bg-gray-50 p-3 rounded-lg mb-4">
+                <p class="text-sm text-gray-600">
+                    <span class="font-semibold">Request ID:</span> <code class="bg-gray-200 px-2 py-1 rounded">@requestId</code>
+                </p>
+            </div>
+        }
+
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <a href="@Url.Action("Dashboard", "Home")" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200 text-center">
+                <i class="bi bi-house-door ml-2"></i>بازگشت به داشبورد
+            </a>
+            <a href="@Url.Action("Index", "Home")" class="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors duration-200 text-center">
+                <i class="bi bi-arrow-left ml-2"></i>صفحه اصلی
+            </a>
+        </div>
+
+        <div class="mt-6 text-center text-sm text-gray-500">
+            <p>اگر این مشکل ادامه داشت، لطفاً با مدیر سیستم تماس بگیرید.</p>
+            <p class="mt-2">لاگ‌های خطا در پوشه <code class="bg-gray-200 px-2 py-1 rounded">logs\</code> ذخیره می‌شوند.</p>
+        </div>
+    </div>
+</div>
+

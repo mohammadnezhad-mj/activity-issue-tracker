@@ -1,0 +1,202 @@
+@model RayanTask.Controllers.ActivityViewModel
+
+@{
+    ViewData["Title"] = "لیست فعالیت‌های من";
+}
+
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                        <i class="bi bi-list-ul text-indigo-600"></i>
+                        لیست فعالیت‌های شما (امروز و دیروز)
+                    </h1>
+                    <p class="text-gray-600 mt-2">فعالیت‌های ثبت شده در امروز و دیروز</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="@Url.Action("Dashboard", "Home")" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors duration-200">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>داشبورد</span>
+                    </a>
+                    <a href="@Url.Action("Create", "Home")" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>ثبت فعالیت جدید</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Alerts -->
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="mb-6 bg-green-50 border-r-4 border-green-500 text-green-800 px-4 py-3 rounded-lg flex items-center gap-3 shadow-sm">
+                <i class="bi bi-check-circle-fill text-xl"></i>
+                <div class="flex-1">@TempData["SuccessMessage"]</div>
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="mb-6 bg-red-50 border-r-4 border-red-500 text-red-800 px-4 py-3 rounded-lg flex items-center gap-3 shadow-sm">
+                <i class="bi bi-exclamation-triangle-fill text-xl"></i>
+                <div class="flex-1">@TempData["ErrorMessage"]</div>
+            </div>
+        }
+        
+        @if (Model.Records.Any())
+        {
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-4">
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="bi bi-list-check"></i>
+                        فعالیت‌های ثبت شده (@Model.Records.Count مورد)
+                    </h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                    <i class="bi bi-calendar3"></i> تاریخ
+                                </th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                    <i class="bi bi-activity"></i> نوع فعالیت
+                                </th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                    <i class="bi bi-file-text"></i> شرح
+                                </th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                    <i class="bi bi-clock"></i> مدت زمان
+                                </th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                    <i class="bi bi-people"></i> ذی‌نفع
+                                </th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                    <i class="bi bi-check-circle"></i> نتیجه
+                                </th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                    <i class="bi bi-gear"></i> عملیات
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @foreach (var record in Model.Records)
+                            {
+                                <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">@record.Date.ToString("yyyy/MM/dd")</div>
+                                        <div class="text-sm text-gray-500">@record.Date.ToPersianDate()</div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm text-gray-900 max-w-xs">@record.GetActivityTypesDisplay()</div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm text-gray-900 max-w-xs truncate" title="@record.Description">
+                                            @(record.Description.Length > 50 ? record.Description.Substring(0, 50) + "..." : record.Description)
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="text-sm text-gray-900">@record.DurationMinutes دقیقه</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="text-sm text-gray-900">@(string.IsNullOrWhiteSpace(record.Stakeholder) ? "-" : record.Stakeholder)</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            @record.Result.Value
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div class="flex items-center gap-2">
+                                            @if (Model.CurrentUser.CanEdit || Model.CurrentUser.IsAdmin)
+                                            {
+                                                <a href="@Url.Action("Edit", "Home", new { id = record.Id })" class="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                                                    <i class="bi bi-pencil"></i>
+                                                    <span class="hidden md:inline">ویرایش</span>
+                                                </a>
+                                            }
+                                            @if (Model.CurrentUser.CanDelete || Model.CurrentUser.IsAdmin)
+                                            {
+                                                <button type="button" onclick="openDeleteModal(@record.Id)" class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                                                    <i class="bi bi-trash"></i>
+                                                    <span class="hidden md:inline">حذف</span>
+                                                </button>
+                                            }
+                                            @if (!Model.CurrentUser.CanEdit && !Model.CurrentUser.CanDelete && !Model.CurrentUser.IsAdmin)
+                                            {
+                                                <span class="text-gray-400 text-xs">بدون دسترسی</span>
+                                            }
+                                        </div>
+                                    </td>
+                                    
+                                    <!-- Delete Modal -->
+                                    <div id="deleteModal@(record.Id)" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="direction: rtl;">
+                                        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-xl bg-white">
+                                            <div class="flex justify-between items-center mb-4">
+                                                <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                                    <i class="bi bi-exclamation-triangle text-red-600"></i>
+                                                    تایید حذف
+                                                </h3>
+                                                <button onclick="closeDeleteModal(@record.Id)" class="text-gray-400 hover:text-gray-600">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </div>
+                                            <div class="mb-4">
+                                                <p class="text-gray-700 mb-3">آیا از حذف این رکورد اطمینان دارید؟</p>
+                                                <div class="bg-amber-50 border-r-4 border-amber-500 text-amber-800 px-4 py-3 rounded-lg">
+                                                    <p class="text-sm"><strong>تاریخ:</strong> @record.Date.ToString("yyyy/MM/dd") - @record.Date.ToPersianDate()</p>
+                                                    <p class="text-sm"><strong>نوع فعالیت:</strong> @record.GetActivityTypesDisplay()</p>
+                                                </div>
+                                            </div>
+                                            <form asp-action="Delete" method="post" class="flex gap-3">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@record.Id" />
+                                                <button type="button" onclick="closeDeleteModal(@record.Id)" class="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors duration-200">
+                                                    <i class="bi bi-x-circle"></i> انصراف
+                                                </button>
+                                                <button type="submit" class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200">
+                                                    <i class="bi bi-trash"></i> حذف
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="text-center">
+                    <i class="bi bi-info-circle text-6xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600 text-lg">هیچ رکوردی برای امروز و دیروز ثبت نشده است.</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+function openDeleteModal(id) {
+    document.getElementById('deleteModal' + id).classList.remove('hidden');
+}
+
+function closeDeleteModal(id) {
+    document.getElementById('deleteModal' + id).classList.add('hidden');
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    if (event.target.classList.contains('bg-opacity-50')) {
+        event.target.classList.add('hidden');
+    }
+}
+</script>

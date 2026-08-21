@@ -1,0 +1,355 @@
+@model RayanTask.Controllers.ReportViewModel
+
+@{
+    ViewData["Title"] = "گزارش‌گیری";
+}
+
+<div class="main-container">
+    <div class="page-header">
+        <h2><i class="bi bi-graph-up"></i>گزارش‌ فعالیت ها</h2>
+        <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-right"></i>بازگشت
+        </a>
+    </div>
+
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-header" style="background: var(--light); border-bottom: 1px solid var(--border);">
+            <h5 class="mb-0"><i class="bi bi-funnel"></i>فیلترها</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" asp-action="Index" id="filterForm">
+                <div class="row mb-3">
+                    <div class="col-12 col-md-6 col-lg-3 mb-3 mb-md-0">
+                        <label class="form-label">
+                            <i class="bi bi-person"></i>نام و نام خانوادگی
+                        </label>
+                        <select name="fullName" class="form-select">
+                            <option value="">-- همه --</option>
+                            @foreach (var name in Model.Configuration.Names)
+                            {
+                                var fullName = $"{name.FirstName} {name.LastName}";
+                                var selectedFullName = "";
+                                if (!string.IsNullOrWhiteSpace(Model.Filter.Name) || !string.IsNullOrWhiteSpace(Model.Filter.LastName))
+                                {
+                                    selectedFullName = $"{Model.Filter.Name} {Model.Filter.LastName}".Trim();
+                                }
+                                var isSelected = selectedFullName == fullName;
+                                <option value="@fullName" selected="@isSelected">@fullName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-3 mb-3 mb-md-0">
+                        <label class="form-label">
+                            <i class="bi bi-calendar-event"></i>تاریخ از
+                        </label>
+                        <input type="date" name="DateFrom" class="form-control" value="@(Model.Filter.DateFrom?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-3 mb-3 mb-md-0">
+                        <label class="form-label">
+                            <i class="bi bi-calendar-check"></i>تاریخ تا
+                        </label>
+                        <input type="date" name="DateTo" class="form-control" value="@(Model.Filter.DateTo?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-3 mb-3 mb-md-0">
+                        <label class="form-label">
+                            <i class="bi bi-activity"></i>نوع فعالیت
+                        </label>
+                        <select name="ActivityType" class="form-select">
+                            <option value="">-- همه --</option>
+                            @foreach (var activityType in Model.Configuration.ActivityTypes)
+                            {
+                                <option value="@activityType.Value" selected="@(Model.Filter.ActivityType == activityType.Value)">@activityType.Value</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-12 col-md-6 col-lg-3 mb-3 mb-md-0">
+                        <label class="form-label">
+                            <i class="bi bi-check-circle"></i>نتیجه
+                        </label>
+                        <select name="Result" class="form-select">
+                            <option value="">-- همه --</option>
+                            @foreach (var result in Model.Configuration.Results)
+                            {
+                                <option value="@result.Value" selected="@(Model.Filter.Result == result.Value)">@result.Value</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-3 mb-3 mb-md-0">
+                        <label class="form-label">
+                            <i class="bi bi-people"></i>ذی‌نفع / مشتری
+                        </label>
+                        <input type="text" name="Stakeholder" class="form-control" value="@Model.Filter.Stakeholder" placeholder="جستجو..." />
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-3 mb-3 mb-md-0">
+                        <label class="form-label">
+                            <i class="bi bi-clock"></i>حداقل مدت زمان (دقیقه)
+                        </label>
+                        <input type="number" name="MinDuration" class="form-control" placeholder="حداقل" value="@Model.Filter.MinDuration" min="0" />
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-3 mb-3 mb-md-0">
+                        <label class="form-label">
+                            <i class="bi bi-clock-history"></i>حداکثر مدت زمان (دقیقه)
+                        </label>
+                        <input type="number" name="MaxDuration" class="form-control" placeholder="حداکثر" value="@Model.Filter.MaxDuration" min="0" />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex gap-2 align-items-center flex-wrap">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search"></i>اعمال فیلتر
+                            </button>
+                            <a href="@Url.Action("Index", "Reports")" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-clockwise"></i>پاک کردن فیلترها
+                            </a>
+                            <div class="ms-md-auto d-flex align-items-center gap-2">
+                                <i class="bi bi-list-ul text-muted"></i>
+                                <span class="text-muted">تعداد نتایج:</span>
+                                <strong>@Model.Records.Count</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (Model.Records.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover" id="reportsTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="name">
+                            <i class="bi bi-person"></i> نام
+                            <i class="bi bi-arrow-down-up sort-icon"></i>
+                        </th>
+                        <th class="sortable" data-sort="lastname">
+                            <i class="bi bi-person-badge"></i> نام خانوادگی
+                            <i class="bi bi-arrow-down-up sort-icon"></i>
+                        </th>
+                        <th class="sortable" data-sort="date">
+                            <i class="bi bi-calendar3"></i> تاریخ
+                            <i class="bi bi-arrow-down-up sort-icon"></i>
+                        </th>
+                        <th class="sortable" data-sort="activity">
+                            <i class="bi bi-activity"></i> نوع فعالیت
+                            <i class="bi bi-arrow-down-up sort-icon"></i>
+                        </th>
+                        <th class="sortable" data-sort="description">
+                            <i class="bi bi-file-text"></i> شرح
+                            <i class="bi bi-arrow-down-up sort-icon"></i>
+                        </th>
+                        <th class="sortable" data-sort="duration">
+                            <i class="bi bi-clock"></i> مدت زمان
+                            <i class="bi bi-arrow-down-up sort-icon"></i>
+                        </th>
+                        <th class="sortable" data-sort="stakeholder">
+                            <i class="bi bi-people"></i> ذی‌نفع / مشتری
+                            <i class="bi bi-arrow-down-up sort-icon"></i>
+                        </th>
+                        <th class="sortable" data-sort="result">
+                            <i class="bi bi-check-circle"></i> نتیجه
+                            <i class="bi bi-arrow-down-up sort-icon"></i>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var record in Model.Records)
+                    {
+                        <tr>
+                            <td data-label="نام" data-sort-value="@record.Name">@record.Name</td>
+                            <td data-label="نام خانوادگی" data-sort-value="@record.LastName">@record.LastName</td>
+                            <td data-label="تاریخ" data-sort-value="@record.Date.ToString("yyyy-MM-dd")">
+                                <div>@record.Date.ToString("yyyy/MM/dd")</div>
+                                <small class="text-muted">@record.Date.ToPersianDate()</small>
+                            </td>
+                            <td data-label="نوع فعالیت" data-sort-value="@record.GetActivityTypesDisplay()">@record.GetActivityTypesDisplay()</td>
+                            <td data-label="شرح" data-sort-value="@record.Description">
+                                <div class="text-truncate" style="max-width: 200px;" title="@record.Description">
+                                    @(record.Description.Length > 50 ? record.Description.Substring(0, 50) + "..." : record.Description)
+                                </div>
+                            </td>
+                            <td data-label="مدت زمان" data-sort-value="@record.DurationMinutes">@record.DurationMinutes دقیقه</td>
+                            <td data-label="ذی‌نفع" data-sort-value="@record.Stakeholder">@(string.IsNullOrWhiteSpace(record.Stakeholder) ? "-" : record.Stakeholder)</td>
+                            <td data-label="نتیجه" data-sort-value="@record.Result.Value">@record.Result.Value</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4">
+            <h5 class="mb-3"><i class="bi bi-bar-chart"></i>خلاصه گزارش</h5>
+            <div class="row g-3">
+                <div class="col-6 col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-list-ul text-primary" style="font-size: 2rem;"></i>
+                            <h6 class="card-title mt-2 mb-1">تعداد کل رکوردها</h6>
+                            <p class="card-text h4 mb-0">@Model.Records.Count</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-clock-history text-info" style="font-size: 2rem;"></i>
+                            <h6 class="card-title mt-2 mb-1">مجموع مدت زمان</h6>
+                            <p class="card-text h4 mb-0">@Model.Records.Sum(r => r.DurationMinutes)</p>
+                            <small class="text-muted">دقیقه</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-graph-up text-success" style="font-size: 2rem;"></i>
+                            <h6 class="card-title mt-2 mb-1">میانگین مدت زمان</h6>
+                            <p class="card-text h4 mb-0">@(Model.Records.Any() ? Math.Round(Model.Records.Average(r => r.DurationMinutes), 1) : 0)</p>
+                            <small class="text-muted">دقیقه</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-people text-warning" style="font-size: 2rem;"></i>
+                            <h6 class="card-title mt-2 mb-1">تعداد کاربران</h6>
+                            <p class="card-text h4 mb-0">@Model.Records.Select(r => new { r.Name, r.LastName }).Distinct().Count()</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center">
+            <i class="bi bi-info-circle me-2"></i>
+            هیچ رکوردی با فیلترهای انتخابی یافت نشد.
+        </div>
+    }
+
+</div>
+
+@section Scripts {
+    <script>
+        // Initialize Choices.js for searchable dropdowns and Table Sorting
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize fullName dropdown
+            const fullNameSelect = document.querySelector('select[name="fullName"]');
+            if (fullNameSelect) {
+                new Choices(fullNameSelect, {
+                    searchEnabled: true,
+                    searchPlaceholderValue: 'جستجو...',
+                    itemSelectText: '',
+                    placeholder: true,
+                    placeholderValue: '-- همه --',
+                    shouldSort: false
+                });
+            }
+
+            // Initialize ActivityType dropdown
+            const activityTypeSelect = document.querySelector('select[name="ActivityType"]');
+            if (activityTypeSelect) {
+                new Choices(activityTypeSelect, {
+                    searchEnabled: true,
+                    searchPlaceholderValue: 'جستجو...',
+                    itemSelectText: '',
+                    placeholder: true,
+                    placeholderValue: '-- همه --',
+                    shouldSort: false
+                });
+            }
+
+            // Initialize Result dropdown
+            const resultSelect = document.querySelector('select[name="Result"]');
+            if (resultSelect) {
+                new Choices(resultSelect, {
+                    searchEnabled: true,
+                    searchPlaceholderValue: 'جستجو...',
+                    itemSelectText: '',
+                    placeholder: true,
+                    placeholderValue: '-- همه --',
+                    shouldSort: false
+                });
+            }
+
+            // Table Sorting
+            const table = document.getElementById('reportsTable');
+            if (!table) return;
+
+            const headers = table.querySelectorAll('thead th.sortable');
+            const tbody = table.querySelector('tbody');
+            let currentSort = { column: null, direction: 'asc' };
+
+            headers.forEach((header, index) => {
+                header.style.cursor = 'pointer';
+                header.addEventListener('click', function() {
+                    const sortType = this.getAttribute('data-sort');
+                    const isAsc = currentSort.column === sortType && currentSort.direction === 'asc';
+                    currentSort.direction = isAsc ? 'desc' : 'asc';
+                    currentSort.column = sortType;
+
+                    // Reset all icons
+                    headers.forEach(h => {
+                        const icon = h.querySelector('.sort-icon');
+                        if (icon) {
+                            icon.className = 'bi bi-arrow-down-up sort-icon';
+                        }
+                    });
+
+                    // Update current icon
+                    const icon = this.querySelector('.sort-icon');
+                    if (icon) {
+                        icon.className = isAsc ? 'bi bi-arrow-down sort-icon' : 'bi bi-arrow-up sort-icon';
+                    }
+
+                    sortTable(tbody, index, isAsc);
+                });
+            });
+
+            function sortTable(tbody, columnIndex, ascending) {
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                
+                rows.sort((a, b) => {
+                    const aCell = a.cells[columnIndex];
+                    const bCell = b.cells[columnIndex];
+                    
+                    const aValue = aCell.getAttribute('data-sort-value') || aCell.textContent.trim();
+                    const bValue = bCell.getAttribute('data-sort-value') || bCell.textContent.trim();
+                    
+                    // Try to parse as number
+                    const aNum = parseFloat(aValue);
+                    const bNum = parseFloat(bValue);
+                    
+                    if (!isNaN(aNum) && !isNaN(bNum)) {
+                        return ascending ? aNum - bNum : bNum - aNum;
+                    }
+                    
+                    // Try to parse as date
+                    const aDate = new Date(aValue);
+                    const bDate = new Date(bValue);
+                    
+                    if (!isNaN(aDate.getTime()) && !isNaN(bDate.getTime())) {
+                        return ascending ? aDate - bDate : bDate - aDate;
+                    }
+                    
+                    // String comparison
+                    return ascending 
+                        ? aValue.localeCompare(bValue, 'fa')
+                        : bValue.localeCompare(aValue, 'fa');
+                });
+                
+                // Clear and re-append sorted rows
+                tbody.innerHTML = '';
+                rows.forEach(row => tbody.appendChild(row));
+            }
+        });
+    </script>
+}

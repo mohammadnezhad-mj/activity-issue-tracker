@@ -1,0 +1,223 @@
+@model List<RayanTask.Models.User>
+
+@{
+    ViewData["Title"] = "مدیریت کاربران";
+}
+
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                        <i class="bi bi-people text-indigo-600"></i>
+                        مدیریت کاربران
+                    </h1>
+                    <p class="text-gray-600 mt-2">ثبت، ویرایش و مدیریت کاربران سیستم</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="@Url.Action("Dashboard", "Home")" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors duration-200">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>داشبورد</span>
+                    </a>
+                    <a href="@Url.Action("Dashboard", "Home")" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors duration-200">
+                        <i class="bi bi-arrow-right"></i>
+                        <span>بازگشت</span>
+                    </a>
+                    <a href="@Url.Action("CreateUser", "Admin")" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>کاربر جدید</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Alerts -->
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="mb-6 bg-green-50 border-r-4 border-green-500 text-green-800 px-4 py-3 rounded-lg flex items-center gap-3 shadow-sm">
+                <i class="bi bi-check-circle-fill text-xl"></i>
+                <div class="flex-1">@TempData["SuccessMessage"]</div>
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="mb-6 bg-red-50 border-r-4 border-red-500 text-red-800 px-4 py-3 rounded-lg flex items-center gap-3 shadow-sm">
+                <i class="bi bi-exclamation-triangle-fill text-xl"></i>
+                <div class="flex-1">@TempData["ErrorMessage"]</div>
+            </div>
+        }
+
+        @if (TempData["InfoMessage"] != null)
+        {
+            <div class="mb-6 bg-blue-50 border-r-4 border-blue-500 text-blue-800 px-4 py-3 rounded-lg flex items-center gap-3 shadow-sm">
+                <i class="bi bi-info-circle-fill text-xl"></i>
+                <div class="flex-1">@TempData["InfoMessage"]</div>
+            </div>
+        }
+
+        @if (Model.Any())
+        {
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="bi bi-list-check"></i>
+                        لیست کاربران (@Model.Count مورد)
+                    </h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">نام و نام خانوادگی</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">نقش</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">دسترسی‌ها</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">وضعیت</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @foreach (var user in Model)
+                            {
+                                <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="text-sm font-medium text-gray-900">@user.FirstName @user.LastName</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @if (user.IsAdmin)
+                                        {
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">مدیر سیستم</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">کاربر عادی</span>
+                                        }
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex flex-wrap gap-1">
+                                            @if (user.CanEdit)
+                                            {
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">ویرایش</span>
+                                            }
+                                            @if (user.CanDelete)
+                                            {
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">حذف</span>
+                                            }
+                                            @if (user.CanSelectAnyDate)
+                                            {
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800">انتخاب تاریخ</span>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @if (user.IsActive)
+                                        {
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">فعال</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">غیرفعال</span>
+                                        }
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div class="flex items-center gap-2">
+                                            <a href="@Url.Action("EditUser", "Admin", new { id = user.Id })" class="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                                                <i class="bi bi-pencil"></i>
+                                                <span>ویرایش</span>
+                                            </a>
+                                            <button type="button" onclick="openDeleteRecordsModal(@user.Id)" class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                                                <i class="bi bi-trash3"></i>
+                                                <span>حذف رکوردها</span>
+                                            </button>
+                                            <form asp-action="ToggleUserStatus" method="post" class="inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@user.Id" />
+                                                <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 @(user.IsActive ? "bg-gray-500 hover:bg-gray-600" : "bg-green-600 hover:bg-green-700") text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                                                    <i class="bi bi-@(user.IsActive ? "eye-slash" : "eye")"></i>
+                                                    <span>@(user.IsActive ? "غیرفعال" : "فعال")</span>
+                                                </button>
+                                            </form>
+                                            <form asp-action="DeleteUser" method="post" class="inline" onsubmit="return confirm('آیا از حذف این کاربر اطمینان دارید؟');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@user.Id" />
+                                                <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                                                    <i class="bi bi-trash"></i>
+                                                    <span>حذف</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="text-center">
+                    <i class="bi bi-info-circle text-6xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600 text-lg">هیچ کاربری ثبت نشده است.</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Delete All Records Modals -->
+@foreach (var user in Model)
+{
+    <div id="deleteAllRecordsModal@(user.Id)" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="direction: rtl;">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-xl bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <i class="bi bi-exclamation-triangle text-red-600"></i>
+                    تایید حذف تمام رکوردها
+                </h3>
+                <button onclick="closeDeleteRecordsModal(@user.Id)" class="text-gray-400 hover:text-gray-600">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="mb-4">
+                <p class="text-gray-700 mb-3">آیا از حذف <strong>تمام رکوردهای فعالیت</strong> کاربر <strong>@user.FirstName @user.LastName</strong> اطمینان دارید؟</p>
+                <div class="bg-amber-50 border-r-4 border-amber-500 text-amber-800 px-4 py-3 rounded-lg">
+                    <i class="bi bi-exclamation-triangle-fill ml-2"></i>
+                    <strong>هشدار:</strong> این عملیات غیرقابل بازگشت است و تمام رکوردهای فعالیت این کاربر حذف خواهد شد.
+                </div>
+            </div>
+            <form asp-action="DeleteAllUserRecords" method="post" class="flex gap-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="firstName" value="@user.FirstName" />
+                <input type="hidden" name="lastName" value="@user.LastName" />
+                <button type="button" onclick="closeDeleteRecordsModal(@user.Id)" class="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors duration-200">
+                    <i class="bi bi-x-circle ml-2"></i>انصراف
+                </button>
+                <button type="submit" class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200">
+                    <i class="bi bi-trash3 ml-2"></i>حذف تمام رکوردها
+                </button>
+            </form>
+        </div>
+    </div>
+}
+
+<script>
+function openDeleteRecordsModal(id) {
+    document.getElementById('deleteAllRecordsModal' + id).classList.remove('hidden');
+}
+
+function closeDeleteRecordsModal(id) {
+    document.getElementById('deleteAllRecordsModal' + id).classList.add('hidden');
+}
+
+window.onclick = function(event) {
+    if (event.target.classList.contains('bg-opacity-50')) {
+        event.target.classList.add('hidden');
+    }
+}
+</script>

@@ -1,0 +1,477 @@
+@model RayanTask.Controllers.DashboardViewModel
+
+@{
+    ViewData["Title"] = "داشبورد";
+}
+
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                        <i class="bi bi-speedometer2 text-indigo-600"></i>
+                        داشبورد
+                    </h1>
+                    <p class="text-gray-600 mt-2">خوش آمدید <strong class="text-gray-900">@Model.UserName</strong></p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    @if (Model.CanViewActivityList)
+                    {
+                        <a href="@Url.Action("Create", "Home")" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg">
+                            <i class="bi bi-plus-circle"></i>
+                            <span>ثبت فعالیت جدید</span>
+                        </a>
+                    }
+                    <a href="@Url.Action("ChangePassword", "Account")" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors duration-200">
+                        <i class="bi bi-key"></i>
+                        <span>تغییر رمز عبور</span>
+                    </a>
+                    <a href="@Url.Action("SecurityQuestion", "Account")" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors duration-200">
+                        <i class="bi bi-shield-lock"></i>
+                        <span>سوال امنیتی</span>
+                    </a>
+                    <form asp-action="Logout" asp-controller="Account" method="post" class="inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg">
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span>خروج</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Alerts -->
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="mb-6 bg-green-50 border-r-4 border-green-500 text-green-800 px-4 py-3 rounded-lg flex items-center gap-3 shadow-sm">
+                <i class="bi bi-check-circle-fill text-xl"></i>
+                <div class="flex-1">@TempData["SuccessMessage"]</div>
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="mb-6 bg-red-50 border-r-4 border-red-500 text-red-800 px-4 py-3 rounded-lg flex items-center gap-3 shadow-sm">
+                <i class="bi bi-exclamation-triangle-fill text-xl"></i>
+                <div class="flex-1">@TempData["ErrorMessage"]</div>
+            </div>
+        }
+
+        @if (Model.CanViewActivityList)
+        {
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <!-- Today Stats -->
+                <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-2xl p-6 shadow-xl transform hover:scale-105 transition-transform duration-200">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-indigo-100 text-sm font-medium mb-2">امروز</p>
+                            <h3 class="text-4xl font-bold mb-2">@Model.TodayRecordsCount</h3>
+                            <p class="text-indigo-100 text-sm">@(Model.TodayTotalMinutes / 60) ساعت و @(Model.TodayTotalMinutes % 60) دقیقه</p>
+                        </div>
+                        <i class="bi bi-calendar-day text-6xl opacity-30"></i>
+                    </div>
+                </div>
+
+                <!-- Week Stats -->
+                <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl p-6 shadow-xl transform hover:scale-105 transition-transform duration-200">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-green-100 text-sm font-medium mb-2">این هفته</p>
+                            <h3 class="text-4xl font-bold mb-2">@Model.WeekRecordsCount</h3>
+                            <p class="text-green-100 text-sm">@(Model.WeekTotalMinutes / 60) ساعت و @(Model.WeekTotalMinutes % 60) دقیقه</p>
+                        </div>
+                        <i class="bi bi-calendar-week text-6xl opacity-30"></i>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Issues Stats -->
+        <div class="bg-gradient-to-br from-sky-600 to-indigo-600 text-white rounded-2xl p-6 shadow-xl mb-8">
+            <div class="flex flex-col lg:flex-row justify-between gap-6">
+                <div class="flex-1">
+                    <div class="flex items-start justify-between gap-4 mb-5">
+                        <div>
+                            <h6 class="text-sky-100 text-sm font-medium mb-2 flex items-center gap-2">
+                                <i class="bi bi-kanban"></i>
+                                @(Model.IsAdmin ? "نمای کلی درخواست‌ها" : "درخواست‌های مرتبط با من")
+                            </h6>
+                            <p class="text-white text-3xl font-bold">@Model.TotalVisibleIssues</p>
+                            <p class="text-sky-100 text-sm mt-1">@(Model.IsAdmin ? "همه کارهای قابل پیگیری" : "ارجاع‌شده به شما یا ثبت‌شده توسط شما")</p>
+                        </div>
+                        <a href="@Url.Action("Index", "Issues", new { queue = Model.IsAdmin ? "all" : "my" })" class="inline-flex items-center gap-2 px-3 py-2 bg-white/15 hover:bg-white/25 text-white rounded-lg text-sm font-medium transition-colors">
+                            <i class="bi bi-arrow-left-circle"></i>
+                            <span>مشاهده</span>
+                        </a>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div class="rounded-xl bg-white/12 border border-white/15 px-4 py-3">
+                            <div class="flex items-center gap-2 text-sky-100 text-xs mb-2">
+                                <i class="bi bi-hourglass-split"></i>
+                                <span>باز</span>
+                            </div>
+                            <strong class="text-2xl">@Model.OpenIssuesCount</strong>
+                        </div>
+                        <div class="rounded-xl bg-white/12 border border-white/15 px-4 py-3">
+                            <div class="flex items-center gap-2 text-sky-100 text-xs mb-2">
+                                <i class="bi bi-check2-circle"></i>
+                                <span>تکمیل شده</span>
+                            </div>
+                            <strong class="text-2xl">@Model.CompletedIssuesCount</strong>
+                        </div>
+                        <div class="rounded-xl bg-white/12 border border-white/15 px-4 py-3">
+                            <div class="flex items-center gap-2 text-sky-100 text-xs mb-2">
+                                <i class="bi bi-person-check"></i>
+                                <span>ارجاع به من</span>
+                            </div>
+                            <strong class="text-2xl">@Model.MyAssignedIssuesCount</strong>
+                        </div>
+                        <div class="rounded-xl bg-white/12 border border-white/15 px-4 py-3">
+                            <div class="flex items-center gap-2 text-sky-100 text-xs mb-2">
+                                <i class="bi bi-send-check"></i>
+                                <span>ثبت‌شده توسط من</span>
+                            </div>
+                            <strong class="text-2xl">@Model.MyReportedIssuesCount</strong>
+                        </div>
+                        <div class="rounded-xl bg-white/12 border border-white/15 px-4 py-3">
+                            <div class="flex items-center gap-2 text-sky-100 text-xs mb-2">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                <span>فوری / زیاد</span>
+                            </div>
+                            <strong class="text-2xl">@Model.UrgentIssuesCount</strong>
+                        </div>
+                        <div class="rounded-xl bg-white/12 border border-white/15 px-4 py-3">
+                            <div class="flex items-center gap-2 text-sky-100 text-xs mb-2">
+                                <i class="bi bi-clock-history"></i>
+                                <span>تاخیرخورده</span>
+                            </div>
+                            <strong class="text-2xl">@Model.OverdueIssuesCount</strong>
+                        </div>
+                        @if (Model.IsAdmin)
+                        {
+                            <div class="rounded-xl bg-white/12 border border-white/15 px-4 py-3">
+                                <div class="flex items-center gap-2 text-sky-100 text-xs mb-2">
+                                    <i class="bi bi-person-x"></i>
+                                    <span>بدون مسئول</span>
+                                </div>
+                                <strong class="text-2xl">@Model.UnassignedIssuesCount</strong>
+                            </div>
+                            <div class="rounded-xl bg-white/12 border border-white/15 px-4 py-3">
+                                <div class="flex items-center gap-2 text-sky-100 text-xs mb-2">
+                                    <i class="bi bi-diagram-3"></i>
+                                    <span>وضعیت‌ها</span>
+                                </div>
+                                <strong class="text-2xl">@Model.IssuesByStatus.Count</strong>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="hidden lg:flex w-28 shrink-0 items-center justify-center">
+                    <div class="w-24 h-24 rounded-2xl bg-white/12 border border-white/15 flex items-center justify-center">
+                        <i class="bi bi-clipboard2-data text-6xl opacity-70"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl p-6 shadow-xl mb-8">
+            <div class="flex justify-between items-center">
+                <div class="flex-1">
+                    <h6 class="text-blue-100 text-sm font-medium mb-4 flex items-center gap-2">
+                        <i class="bi bi-bug"></i>
+                        درخواست‌ها من
+                    </h6>
+                    @if (Model.TotalAssignedIssues > 0)
+                    {
+                        <div class="flex flex-wrap gap-6">
+                            <div>
+                                <strong class="text-3xl block">@Model.TotalAssignedIssues</strong>
+                                <small class="text-blue-100 text-sm">کل کارها</small>
+                            </div>
+                            @{
+                                var statusCounts = new Dictionary<string, int>
+                                {
+                                    { "ثبت شده", Model.IssuesByStatus.GetValueOrDefault("ثبت شده", 0) },
+                                    { "در حال بررسی", Model.IssuesByStatus.GetValueOrDefault("در حال بررسی", 0) },
+                                    { "در حال انجام", Model.IssuesByStatus.GetValueOrDefault("در حال انجام", 0) },
+                                    { "تکمیل شده", Model.IssuesByStatus.GetValueOrDefault("تکمیل شده", 0) },
+                                    { "لغو شده", Model.IssuesByStatus.GetValueOrDefault("لغو شده", 0) }
+                                };
+                            }
+                            @foreach (var status in statusCounts)
+                            {
+                                if (status.Value > 0)
+                                {
+                                    <div>
+                                        <strong class="text-2xl block">@status.Value</strong>
+                                        <small class="text-blue-100 text-sm">@status.Key</small>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div>
+                            <strong class="text-2xl block">0</strong>
+                            <small class="text-blue-100 text-sm">هیچ کاری به شما انتساب داده نشده است</small>
+                        </div>
+                    }
+                </div>
+                <i class="bi bi-bug text-6xl opacity-30"></i>
+            </div>
+        </div>
+
+        <!-- Main Menu -->
+        <div class="mb-8">
+            <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <i class="bi bi-grid text-indigo-600"></i>
+                منوهای اصلی
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @if (Model.CanViewActivityList)
+                {
+                    <!-- Activity List -->
+                    <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-200 overflow-hidden">
+                        <div class="p-6 text-center">
+                            <div class="w-16 h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                <i class="bi bi-list-ul"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">لیست فعالیت‌های شما</h3>
+                            <p class="text-gray-600 text-sm mb-4">مشاهده و ثبت فعالیت‌های روزانه خود</p>
+                            <a href="@Url.Action("Index", "Home")" class="inline-flex items-center justify-center gap-2 w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200">
+                                <i class="bi bi-arrow-left"></i>
+                                <span>مشاهده</span>
+                            </a>
+                        </div>
+                    </div>
+                }
+
+                <!-- Issues -->
+                <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-200 overflow-hidden">
+                    <div class="p-6 text-center">
+                        <div class="w-16 h-16 bg-cyan-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                            <i class="bi bi-bug"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">درخواست‌ها</h3>
+                        <p class="text-gray-600 text-sm mb-4">ثبت و پیگیری</p>
+                        <a href="@Url.Action("Index", "Issues")" class="inline-flex items-center justify-center gap-2 w-full px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white font-medium rounded-lg transition-colors duration-200">
+                            <i class="bi bi-arrow-left"></i>
+                            <span>مشاهده</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- My Assigned Issues -->
+                @if (Model.CanViewIssueDetails || Model.IsAdmin)
+                {
+                    <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-200 overflow-hidden">
+                        <div class="p-6 text-center">
+                            <div class="w-16 h-16 bg-amber-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                <i class="bi bi-person-check"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">کارهای من</h3>
+                            <p class="text-gray-600 text-sm mb-4">مشکلات انتساب داده شده به من</p>
+                            <a href="@Url.Action("MyAssignedIssues", "Issues")" class="inline-flex items-center justify-center gap-2 w-full px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition-colors duration-200">
+                                <i class="bi bi-arrow-left"></i>
+                                <span>مشاهده</span>
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- System Management -->
+        @if (Model.IsAdmin)
+        {
+            <div class="mb-8">
+                <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <i class="bi bi-gear text-indigo-600"></i>
+                    مدیریت سیستم
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @if (Model.CanManageUsers)
+                    {
+                        <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-200 overflow-hidden">
+                            <div class="p-6 text-center">
+                                <div class="w-16 h-16 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                    <i class="bi bi-people"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">مدیریت کاربران</h3>
+                                <p class="text-gray-600 text-sm mb-4">افزودن، ویرایش و مدیریت کاربران</p>
+                                <a href="@Url.Action("Users", "Admin")" class="inline-flex items-center justify-center gap-2 w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-200">
+                                    <i class="bi bi-arrow-left"></i>
+                                    <span>مشاهده</span>
+                                </a>
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.CanManageActivityTypes)
+                    {
+                        <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-200 overflow-hidden">
+                            <div class="p-6 text-center">
+                                <div class="w-16 h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                    <i class="bi bi-tags"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">مدیریت انواع فعالیت</h3>
+                                <p class="text-gray-600 text-sm mb-4">ثبت و مدیریت انواع فعالیت</p>
+                                <a href="@Url.Action("ActivityTypes", "Admin")" class="inline-flex items-center justify-center gap-2 w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200">
+                                    <i class="bi bi-arrow-left"></i>
+                                    <span>مشاهده</span>
+                                </a>
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.CanManageResults)
+                    {
+                        <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-200 overflow-hidden">
+                            <div class="p-6 text-center">
+                                <div class="w-16 h-16 bg-cyan-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                    <i class="bi bi-check2-circle"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">مدیریت نتیجه</h3>
+                                <p class="text-gray-600 text-sm mb-4">ثبت و مدیریت نتایج فعالیت</p>
+                                <a href="@Url.Action("Results", "Admin")" class="inline-flex items-center justify-center gap-2 w-full px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white font-medium rounded-lg transition-colors duration-200">
+                                    <i class="bi bi-arrow-left"></i>
+                                    <span>مشاهده</span>
+                                </a>
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.CanManageActivityTypes)
+                    {
+                        <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-200 overflow-hidden">
+                            <div class="p-6 text-center">
+                                <div class="w-16 h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                    <i class="bi bi-laptop"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">مدیریت نام نرم افزارها</h3>
+                                <p class="text-gray-600 text-sm mb-4">ثبت و مدیریت نام نرم افزارهای شرکت</p>
+                                <a href="@Url.Action("SoftwareNames", "Admin")" class="inline-flex items-center justify-center gap-2 w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200">
+                                    <i class="bi bi-arrow-left"></i>
+                                    <span>مشاهده</span>
+                                </a>
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.CanManageActivityTypes)
+                    {
+                        <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-200 overflow-hidden">
+                            <div class="p-6 text-center">
+                                <div class="w-16 h-16 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                    <i class="bi bi-tags"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">مدیریت انواع مشکل/نظر</h3>
+                                <p class="text-gray-600 text-sm mb-4">ثبت و مدیریت انواع مشکل/نظر (باگ، بروزرسانی و ...)</p>
+                                <a href="@Url.Action("IssueTypes", "Admin")" class="inline-flex items-center justify-center gap-2 w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-200">
+                                    <i class="bi bi-arrow-left"></i>
+                                    <span>مشاهده</span>
+                                </a>
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.CanViewReports)
+                    {
+                        <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-200 overflow-hidden">
+                            <div class="p-6 text-center">
+                                <div class="w-16 h-16 bg-amber-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                    <i class="bi bi-graph-up"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">گزارش‌گیری</h3>
+                                <p class="text-gray-600 text-sm mb-4">گزارش فعالیت ها</p>
+                                <a href="@Url.Action("Reports", "Admin")" class="inline-flex items-center justify-center gap-2 w-full px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition-colors duration-200">
+                                    <i class="bi bi-arrow-left"></i>
+                                    <span>مشاهده</span>
+                                </a>
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.CanViewLogs)
+                    {
+                        <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-200 overflow-hidden">
+                            <div class="p-6 text-center">
+                                <div class="w-16 h-16 bg-gray-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                    <i class="bi bi-journal-text"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">مشاهده لاگ‌ها</h3>
+                                <p class="text-gray-600 text-sm mb-4">تاریخچه فعالیت‌های سیستم</p>
+                                <a href="@Url.Action("Logs", "Admin")" class="inline-flex items-center justify-center gap-2 w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200">
+                                    <i class="bi bi-arrow-left"></i>
+                                    <span>مشاهده</span>
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Special Permissions -->
+        @if (Model.CanEditIssues || Model.CanDeleteIssues || Model.CanDeleteReports)
+        {
+            <div class="mb-8">
+                <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <i class="bi bi-shield-check text-indigo-600"></i>
+                    دسترسی‌های ویژه
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @if (Model.CanEditIssues)
+                    {
+                        <div class="bg-white rounded-xl shadow-md border-2 border-green-500 overflow-hidden">
+                            <div class="p-6 text-center">
+                                <div class="w-16 h-16 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                    <i class="bi bi-pencil-square"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">ویرایش مشکلات</h3>
+                                <p class="text-gray-600 text-sm mb-4">شما دسترسی ویرایش مشکلات را دارید</p>
+                                <span class="inline-block px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">دسترسی فعال</span>
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.CanDeleteIssues)
+                    {
+                        <div class="bg-white rounded-xl shadow-md border-2 border-red-500 overflow-hidden">
+                            <div class="p-6 text-center">
+                                <div class="w-16 h-16 bg-red-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                    <i class="bi bi-trash"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">حذف مشکلات</h3>
+                                <p class="text-gray-600 text-sm mb-4">شما دسترسی حذف مشکلات را دارید</p>
+                                <span class="inline-block px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full">دسترسی فعال</span>
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.CanDeleteReports)
+                    {
+                        <div class="bg-white rounded-xl shadow-md border-2 border-amber-500 overflow-hidden">
+                            <div class="p-6 text-center">
+                                <div class="w-16 h-16 bg-amber-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                    <i class="bi bi-file-earmark-minus"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">حذف از گزارش‌ها</h3>
+                                <p class="text-gray-600 text-sm mb-4">شما دسترسی حذف از گزارش‌ها را دارید</p>
+                                <span class="inline-block px-3 py-1 bg-amber-100 text-amber-800 text-sm font-medium rounded-full">دسترسی فعال</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

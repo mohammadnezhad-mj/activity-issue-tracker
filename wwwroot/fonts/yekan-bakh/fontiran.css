@@ -1,0 +1,83 @@
+/**
+ * Yekan Bakh FaNum – RTL Font
+ * Vendor: https://fontiran.com
+ * Usage: RTL languages (fa, ar)
+ * Location: /public/fonts/yekan-bakh/
+ */
+
+/* Thin */
+@font-face {
+  font-family: "Yekan Bakh FaNum";
+  font-style: normal;
+  font-weight: 100;
+  src:
+    url("/fonts/yekan-bakh/woff2/YekanBakhFaNum-Thin.woff2") format("woff2"),
+    url("/fonts/yekan-bakh/woff/YekanBakhFaNum-Thin.woff") format("woff");
+  font-display: swap;
+}
+
+/* Light */
+@font-face {
+  font-family: "Yekan Bakh FaNum";
+  font-style: normal;
+  font-weight: 300;
+  src:
+    url("/fonts/yekan-bakh/woff2/YekanBakhFaNum-Light.woff2") format("woff2"),
+    url("/fonts/yekan-bakh/woff/YekanBakhFaNum-Light.woff") format("woff");
+  font-display: swap;
+}
+
+/* Regular */
+@font-face {
+  font-family: "Yekan Bakh FaNum";
+  font-style: normal;
+  font-weight: 400;
+  src:
+    url("/fonts/yekan-bakh/woff2/YekanBakhFaNum-Regular.woff2") format("woff2"),
+    url("/fonts/yekan-bakh/woff/YekanBakhFaNum-Regular.woff") format("woff");
+  font-display: swap;
+}
+
+/* SemiBold */
+@font-face {
+  font-family: "Yekan Bakh FaNum";
+  font-style: normal;
+  font-weight: 600;
+  src:
+    url("/fonts/yekan-bakh/woff2/YekanBakhFaNum-SemiBold.woff2") format("woff2"),
+    url("/fonts/yekan-bakh/woff/YekanBakhFaNum-SemiBold.woff") format("woff");
+  font-display: swap;
+}
+
+/* Bold */
+@font-face {
+  font-family: "Yekan Bakh FaNum";
+  font-style: normal;
+  font-weight: 700;
+  src:
+    url("/fonts/yekan-bakh/woff2/YekanBakhFaNum-Bold.woff2") format("woff2"),
+    url("/fonts/yekan-bakh/woff/YekanBakhFaNum-Bold.woff") format("woff");
+  font-display: swap;
+}
+
+/* ExtraBold */
+@font-face {
+  font-family: "Yekan Bakh FaNum";
+  font-style: normal;
+  font-weight: 800;
+  src:
+    url("/fonts/yekan-bakh/woff2/YekanBakhFaNum-ExtraBold.woff2") format("woff2"),
+    url("/fonts/yekan-bakh/woff/YekanBakhFaNum-ExtraBold.woff") format("woff");
+  font-display: swap;
+}
+
+/* Black */
+@font-face {
+  font-family: "Yekan Bakh FaNum";
+  font-style: normal;
+  font-weight: 900;
+  src:
+    url("/fonts/yekan-bakh/woff2/YekanBakhFaNum-Black.woff2") format("woff2"),
+    url("/fonts/yekan-bakh/woff/YekanBakhFaNum-Black.woff") format("woff");
+  font-display: swap;
+}

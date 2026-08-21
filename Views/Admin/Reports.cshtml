@@ -1,0 +1,472 @@
+@model RayanTask.Controllers.ReportViewModel
+
+@{
+    ViewData["Title"] = "گزارش‌گیری";
+}
+
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                        <i class="bi bi-graph-up text-indigo-600"></i>
+                        گزارش‌ فعالیت ها
+                    </h1>
+                    <p class="text-gray-600 mt-2">گزارش‌گیری پیشرفته و فیلتر بر اساس تمام فیلدها</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="@Url.Action("Dashboard", "Home")" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors duration-200">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>داشبورد</span>
+                    </a>
+                    <a href="@Url.Action("Dashboard", "Home")" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors duration-200">
+                        <i class="bi bi-arrow-right"></i>
+                        <span>بازگشت</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="mb-6 bg-green-50 border-r-4 border-green-500 text-green-800 px-4 py-3 rounded-lg flex items-center gap-3 shadow-sm">
+                <i class="bi bi-check-circle-fill text-xl"></i>
+                <div class="flex-1">@TempData["SuccessMessage"]</div>
+                <button type="button" class="text-gray-400 hover:text-gray-600" onclick="this.parentElement.style.display='none'">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="mb-6 bg-red-50 border-r-4 border-red-500 text-red-800 px-4 py-3 rounded-lg flex items-center gap-3 shadow-sm">
+                <i class="bi bi-exclamation-triangle-fill text-xl"></i>
+                <div class="flex-1">@TempData["ErrorMessage"]</div>
+                <button type="button" class="text-gray-400 hover:text-gray-600" onclick="this.parentElement.style.display='none'">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        }
+
+        <!-- Filters -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <i class="bi bi-funnel text-indigo-600"></i>
+                فیلترها
+            </h2>
+            <form method="get" asp-action="Reports" id="filterForm">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                            <i class="bi bi-person text-indigo-600"></i>نام و نام خانوادگی
+                        </label>
+                        <select name="fullName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <option value="">-- همه --</option>
+                            @foreach (var name in Model.Configuration.Names)
+                            {
+                                var fullName = $"{name.FirstName} {name.LastName}";
+                                var selectedFullName = "";
+                                if (!string.IsNullOrWhiteSpace(Model.Filter.Name) || !string.IsNullOrWhiteSpace(Model.Filter.LastName))
+                                {
+                                    selectedFullName = $"{Model.Filter.Name} {Model.Filter.LastName}".Trim();
+                                }
+                                var isSelected = selectedFullName == fullName;
+                                <option value="@fullName" selected="@isSelected">@fullName</option>
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                            <i class="bi bi-calendar-event text-indigo-600"></i>تاریخ از
+                        </label>
+                        <input type="date" name="DateFrom" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" value="@(Model.Filter.DateFrom?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                            <i class="bi bi-calendar-check text-indigo-600"></i>تاریخ تا
+                        </label>
+                        <input type="date" name="DateTo" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" value="@(Model.Filter.DateTo?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                            <i class="bi bi-activity text-indigo-600"></i>نوع فعالیت
+                        </label>
+                        <select name="ActivityTypes" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" id="activityTypesFilter" multiple>
+                            @{
+                                var selectedActivityTypes = Model.Filter.ActivityTypes ?? new List<string>();
+                                if (!string.IsNullOrWhiteSpace(Model.Filter.ActivityType) && !selectedActivityTypes.Contains(Model.Filter.ActivityType))
+                                {
+                                    selectedActivityTypes.Add(Model.Filter.ActivityType);
+                                }
+                            }
+                            @foreach (var activityType in Model.Configuration.ActivityTypes)
+                            {
+                                @if (selectedActivityTypes.Contains(activityType.Value))
+                                {
+                                    <option value="@activityType.Value" selected>@activityType.Value</option>
+                                }
+                                else
+                                {
+                                    <option value="@activityType.Value">@activityType.Value</option>
+                                }
+                            }
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">می‌توانید چند نوع فعالیت را انتخاب کنید</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                            <i class="bi bi-check-circle text-indigo-600"></i>نتیجه
+                        </label>
+                        <select name="Result" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <option value="">-- همه --</option>
+                            @foreach (var result in Model.Configuration.Results)
+                            {
+                                <option value="@result.Value" selected="@(Model.Filter.Result == result.Value)">@result.Value</option>
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                            <i class="bi bi-people text-indigo-600"></i>ذی‌نفع / مشتری
+                        </label>
+                        <input type="text" name="Stakeholder" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" value="@Model.Filter.Stakeholder" placeholder="جستجو..." />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                            <i class="bi bi-clock text-indigo-600"></i>حداقل مدت زمان (دقیقه)
+                        </label>
+                        <input type="number" name="MinDuration" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="حداقل" value="@Model.Filter.MinDuration" min="0" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                            <i class="bi bi-clock-history text-indigo-600"></i>حداکثر مدت زمان (دقیقه)
+                        </label>
+                        <input type="number" name="MaxDuration" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="حداکثر" value="@Model.Filter.MaxDuration" min="0" />
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-4">
+                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg">
+                        <i class="bi bi-search"></i>
+                        <span>اعمال فیلتر</span>
+                    </button>
+                    <a href="@Url.Action("Reports", "Admin")" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors duration-200">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        <span>پاک کردن فیلترها</span>
+                    </a>
+                    <div class="flex items-center gap-2 text-gray-600">
+                        <i class="bi bi-list-ul"></i>
+                        <span>تعداد نتایج:</span>
+                        <strong class="text-gray-900">@Model.Records.Count</strong>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        @if (Model.Records.Any())
+        {
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200" id="reportsTable">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sortable cursor-pointer hover:bg-gray-100" data-sort="name">
+                                    <div class="flex items-center gap-2">
+                                        <i class="bi bi-person"></i>
+                                        <span>نام</span>
+                                        <i class="bi bi-arrow-down-up sort-icon text-gray-400"></i>
+                                    </div>
+                                </th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sortable cursor-pointer hover:bg-gray-100" data-sort="lastname">
+                                    <div class="flex items-center gap-2">
+                                        <i class="bi bi-person-badge"></i>
+                                        <span>نام خانوادگی</span>
+                                        <i class="bi bi-arrow-down-up sort-icon text-gray-400"></i>
+                                    </div>
+                                </th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sortable cursor-pointer hover:bg-gray-100" data-sort="date">
+                                    <div class="flex items-center gap-2">
+                                        <i class="bi bi-calendar3"></i>
+                                        <span>تاریخ</span>
+                                        <i class="bi bi-arrow-down-up sort-icon text-gray-400"></i>
+                                    </div>
+                                </th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sortable cursor-pointer hover:bg-gray-100" data-sort="activity">
+                                    <div class="flex items-center gap-2">
+                                        <i class="bi bi-activity"></i>
+                                        <span>نوع فعالیت</span>
+                                        <i class="bi bi-arrow-down-up sort-icon text-gray-400"></i>
+                                    </div>
+                                </th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sortable cursor-pointer hover:bg-gray-100" data-sort="description">
+                                    <div class="flex items-center gap-2">
+                                        <i class="bi bi-file-text"></i>
+                                        <span>شرح</span>
+                                        <i class="bi bi-arrow-down-up sort-icon text-gray-400"></i>
+                                    </div>
+                                </th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sortable cursor-pointer hover:bg-gray-100" data-sort="duration">
+                                    <div class="flex items-center gap-2">
+                                        <i class="bi bi-clock"></i>
+                                        <span>مدت زمان</span>
+                                        <i class="bi bi-arrow-down-up sort-icon text-gray-400"></i>
+                                    </div>
+                                </th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sortable cursor-pointer hover:bg-gray-100" data-sort="stakeholder">
+                                    <div class="flex items-center gap-2">
+                                        <i class="bi bi-people"></i>
+                                        <span>ذی‌نفع / مشتری</span>
+                                        <i class="bi bi-arrow-down-up sort-icon text-gray-400"></i>
+                                    </div>
+                                </th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sortable cursor-pointer hover:bg-gray-100" data-sort="result">
+                                    <div class="flex items-center gap-2">
+                                        <i class="bi bi-check-circle"></i>
+                                        <span>نتیجه</span>
+                                        <i class="bi bi-arrow-down-up sort-icon text-gray-400"></i>
+                                    </div>
+                                </th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" style="white-space: nowrap; width: 1%;">
+                                    <i class="bi bi-gear"></i> عملیات
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @{
+                                var canDeleteReports = Context.Session.GetString("CanDeleteReports") == "true";
+                            }
+                            @foreach (var record in Model.Records)
+                            {
+                                <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="نام" data-sort-value="@record.Name">@record.Name</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="نام خانوادگی" data-sort-value="@record.LastName">@record.LastName</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="تاریخ" data-sort-value="@record.Date.ToString("yyyy-MM-dd")">
+                                        <div>@record.Date.ToString("yyyy/MM/dd")</div>
+                                        <small class="text-gray-500">@record.Date.ToPersianDate()</small>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="نوع فعالیت" data-sort-value="@record.GetActivityTypesDisplay()">@record.GetActivityTypesDisplay()</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900 max-w-xs" data-label="شرح" data-sort-value="@record.Description">
+                                        <div class="truncate" title="@record.Description">
+                                            @(record.Description.Length > 50 ? record.Description.Substring(0, 50) + "..." : record.Description)
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="مدت زمان" data-sort-value="@record.DurationMinutes">@record.DurationMinutes دقیقه</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="ذی‌نفع" data-sort-value="@record.Stakeholder">@(string.IsNullOrWhiteSpace(record.Stakeholder) ? "-" : record.Stakeholder)</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="نتیجه" data-sort-value="@record.Result.Value">@record.Result.Value</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium" data-label="عملیات" style="white-space: nowrap;">
+                                        @if (canDeleteReports)
+                                        {
+                                            <button type="button" class="inline-flex items-center gap-1 px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-md transition-colors duration-200" data-bs-toggle="modal" data-bs-target="#deleteModal@(record.Id)">
+                                                <i class="bi bi-trash"></i>
+                                                <span class="hidden md:inline">حذف</span>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-gray-500">-</span>
+                                        }
+                                    </td>
+                                </tr>
+
+                                @if (canDeleteReports)
+                                {
+                                    <!-- Modal حذف -->
+                                    <div class="modal fade" id="deleteModal@(record.Id)" tabindex="-1" aria-labelledby="deleteModalLabel@(record.Id)" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="deleteModalLabel@(record.Id)">
+                                                        <i class="bi bi-exclamation-triangle text-red-500"></i>تایید حذف
+                                                    </h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p class="text-gray-700">آیا از حذف این رکورد اطمینان دارید؟</p>
+                                                    <div class="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200 text-yellow-800">
+                                                        <strong>کاربر:</strong> @record.Name @record.LastName<br />
+                                                        <strong>تاریخ:</strong> @record.Date.ToString("yyyy/MM/dd") - @record.Date.ToPersianDate()<br />
+                                                        <strong>نوع فعالیت:</strong> @record.GetActivityTypesDisplay()
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <form asp-action="DeleteFromReports" asp-controller="Admin" method="post" class="w-full">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@record.Id" />
+                                                        <input type="hidden" name="returnUrl" value="@(Context.Request.QueryString.HasValue ? Context.Request.QueryString.Value : "")" />
+                                                        <div class="flex justify-end gap-3">
+                                                            <button type="button" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors duration-200" data-bs-dismiss="modal">
+                                                                <i class="bi bi-x-circle ml-1"></i>انصراف
+                                                            </button>
+                                                            <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200">
+                                                                <i class="bi bi-trash ml-1"></i>حذف
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="bi bi-bar-chart text-indigo-600"></i>
+                    خلاصه گزارش
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                        <i class="bi bi-list-ul text-indigo-600 text-4xl mb-3"></i>
+                        <h6 class="text-sm font-medium text-gray-700 mb-1">تعداد کل رکوردها</h6>
+                        <p class="text-2xl font-bold text-gray-900">@Model.Records.Count</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                        <i class="bi bi-clock-history text-blue-600 text-4xl mb-3"></i>
+                        <h6 class="text-sm font-medium text-gray-700 mb-1">مجموع مدت زمان</h6>
+                        <p class="text-2xl font-bold text-gray-900">@Model.Records.Sum(r => r.DurationMinutes)</p>
+                        <small class="text-gray-500">دقیقه</small>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                        <i class="bi bi-graph-up text-green-600 text-4xl mb-3"></i>
+                        <h6 class="text-sm font-medium text-gray-700 mb-1">میانگین مدت زمان</h6>
+                        <p class="text-2xl font-bold text-gray-900">@(Model.Records.Any() ? Math.Round(Model.Records.Average(r => r.DurationMinutes), 1) : 0)</p>
+                        <small class="text-gray-500">دقیقه</small>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                        <i class="bi bi-people text-yellow-600 text-4xl mb-3"></i>
+                        <h6 class="text-sm font-medium text-gray-700 mb-1">تعداد کاربران</h6>
+                        <p class="text-2xl font-bold text-gray-900">@Model.Records.Select(r => new { r.Name, r.LastName }).Distinct().Count()</p>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                <i class="bi bi-info-circle text-gray-400 text-6xl mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">هیچ رکوردی با فیلترهای انتخابی یافت نشد.</h3>
+                <p class="text-gray-500">لطفاً فیلترهای دیگری را امتحان کنید.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const fullNameSelect = document.querySelector('select[name="fullName"]');
+            if (fullNameSelect) {
+                new Choices(fullNameSelect, {
+                    searchEnabled: true,
+                    searchPlaceholderValue: 'جستجو...',
+                    itemSelectText: '',
+                    placeholder: true,
+                    placeholderValue: '-- همه --',
+                    shouldSort: false
+                });
+            }
+
+            const activityTypeSelect = document.querySelector('select[name="ActivityTypes"]');
+            if (activityTypeSelect) {
+                new Choices(activityTypeSelect, {
+                    searchEnabled: true,
+                    searchPlaceholderValue: 'جستجو...',
+                    itemSelectText: '',
+                    placeholder: true,
+                    placeholderValue: 'انتخاب نوع فعالیت...',
+                    shouldSort: false,
+                    removeItemButton: true,
+                    maxItemCount: -1 // بدون محدودیت
+                });
+            }
+
+            const resultSelect = document.querySelector('select[name="Result"]');
+            if (resultSelect) {
+                new Choices(resultSelect, {
+                    searchEnabled: true,
+                    searchPlaceholderValue: 'جستجو...',
+                    itemSelectText: '',
+                    placeholder: true,
+                    placeholderValue: '-- همه --',
+                    shouldSort: false
+                });
+            }
+
+            const table = document.getElementById('reportsTable');
+            if (!table) return;
+
+            const headers = table.querySelectorAll('thead th.sortable');
+            const tbody = table.querySelector('tbody');
+            let currentSort = { column: null, direction: 'asc' };
+
+            headers.forEach((header, index) => {
+                header.addEventListener('click', function() {
+                    const sortType = this.getAttribute('data-sort');
+                    const isAsc = currentSort.column === sortType && currentSort.direction === 'asc';
+                    currentSort.direction = isAsc ? 'desc' : 'asc';
+                    currentSort.column = sortType;
+
+                    headers.forEach(h => {
+                        const icon = h.querySelector('.sort-icon');
+                        if (icon) {
+                            icon.className = 'bi bi-arrow-down-up sort-icon text-gray-400';
+                        }
+                    });
+
+                    const icon = this.querySelector('.sort-icon');
+                    if (icon) {
+                        icon.className = isAsc ? 'bi bi-arrow-down sort-icon text-indigo-600' : 'bi bi-arrow-up sort-icon text-indigo-600';
+                    }
+
+                    sortTable(tbody, index, isAsc);
+                });
+            });
+
+            function sortTable(tbody, columnIndex, ascending) {
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                
+                rows.sort((a, b) => {
+                    const aCell = a.cells[columnIndex];
+                    const bCell = b.cells[columnIndex];
+                    
+                    const aValue = aCell.getAttribute('data-sort-value') || aCell.textContent.trim();
+                    const bValue = bCell.getAttribute('data-sort-value') || bCell.textContent.trim();
+                    
+                    const aNum = parseFloat(aValue);
+                    const bNum = parseFloat(bValue);
+                    
+                    if (!isNaN(aNum) && !isNaN(bNum)) {
+                        return ascending ? aNum - bNum : bNum - aNum;
+                    }
+                    
+                    const aDate = new Date(aValue);
+                    const bDate = new Date(bValue);
+                    
+                    if (!isNaN(aDate.getTime()) && !isNaN(bDate.getTime())) {
+                        return ascending ? aDate - bDate : bDate - aDate;
+                    }
+                    
+                    return ascending 
+                        ? aValue.localeCompare(bValue, 'fa')
+                        : bValue.localeCompare(aValue, 'fa');
+                });
+                
+                tbody.innerHTML = '';
+                rows.forEach(row => tbody.appendChild(row));
+            }
+        });
+    </script>
+}

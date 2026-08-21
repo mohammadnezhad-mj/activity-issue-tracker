@@ -1,0 +1,310 @@
+@model RayanTask.Controllers.CreateIssueViewModel
+
+@{
+    ViewData["Title"] = "ثبت مشکل/درخواست جدید";
+}
+
+<div class="min-h-screen bg-gray-50" dir="rtl">
+    <div class="bg-white border-b border-gray-200">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
+                        <i class="bi bi-plus-circle text-indigo-600"></i>
+                        ثبت مشکل/درخواست جدید
+                    </h1>
+                    <p class="mt-2 text-sm text-gray-600">اطلاعات اصلی را ثبت کنید؛ جزئیات فنی و گیت اختیاری هستند.</p>
+                </div>
+                <a href="@Url.Action("Index", "Issues")" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium rounded-lg transition-colors duration-200">
+                    <i class="bi bi-arrow-right"></i>
+                    <span>بازگشت به لیست</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="mb-6 bg-red-50 border-r-4 border-red-500 text-red-800 px-4 py-3 rounded-lg flex items-center gap-3 shadow-sm">
+                <i class="bi bi-exclamation-triangle-fill text-xl"></i>
+                <div class="flex-1">@TempData["ErrorMessage"]</div>
+            </div>
+        }
+
+        <form asp-action="Create" method="post" enctype="multipart/form-data" class="bg-white border border-gray-200 rounded-lg shadow-sm">
+            @Html.AntiForgeryToken()
+
+            <div class="p-5 md:p-6 space-y-8">
+                <section>
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 font-bold">1</span>
+                        <h2 class="text-lg font-semibold text-gray-900">اصل درخواست</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                        <div class="lg:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                عنوان <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" asp-for="Title" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required maxlength="200" placeholder="مثال: خطا در ثبت فاکتور" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                مشتری
+                            </label>
+                            <input type="text" asp-for="CustomerName" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" maxlength="200" placeholder="نام مشتری" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                نرم‌افزار <span class="text-red-500">*</span>
+                            </label>
+                            <select asp-for="SoftwareName" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required>
+                                <option value="">انتخاب کنید</option>
+                                @foreach (var software in Model.SoftwareNames)
+                                {
+                                    <option value="@software">@software</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                نوع درخواست <span class="text-red-500">*</span>
+                            </label>
+                            <select asp-for="IssueType" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required>
+                                <option value="">انتخاب کنید</option>
+                                @foreach (var issueType in Model.IssueTypes)
+                                {
+                                    <option value="@issueType">@issueType</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                محیط
+                            </label>
+                            <select asp-for="Environment" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                <option value="">نامشخص</option>
+                                <option value="Production">عملیاتی</option>
+                                <option value="Test">تست</option>
+                                <option value="Development">توسعه</option>
+                            </select>
+                        </div>
+
+                        <div class="lg:col-span-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                شرح کامل <span class="text-red-500">*</span>
+                            </label>
+                            <textarea asp-for="Description" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" rows="5" required maxlength="2000" placeholder="شرح مشکل، مراحل رخداد، پیام خطا یا انتظار کاربر"></textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="border-t border-gray-200 pt-6">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 font-bold">2</span>
+                        <h2 class="text-lg font-semibold text-gray-900">پیگیری پشتیبانی</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                کانال گزارش
+                            </label>
+                            <select asp-for="ReportedChannel" id="reportedChannelSelect" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                <option value="">انتخاب نشده</option>
+                                <option value="Phone">تلفن</option>
+                                <option value="Telegram">تلگرام</option>
+                                <option value="Email">ایمیل</option>
+                                <option value="In Person">حضوری</option>
+                                <option value="System">سیستم</option>
+                            </select>
+                        </div>
+
+                        <div id="reportedChannelUrlGroup" class="hidden md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                لینک کانال/پیام
+                            </label>
+                            <input type="url" asp-for="ReportedChannelUrl" id="reportedChannelUrlInput" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" maxlength="1000" placeholder="https://..." />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                پیوست
+                            </label>
+                            <input type="file" name="attachments" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white" multiple />
+                        </div>
+                    </div>
+                </section>
+
+                <section class="border-t border-gray-200 pt-6">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 font-bold">3</span>
+                        <h2 class="text-lg font-semibold text-gray-900">اولویت و مالکیت</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                اولویت
+                            </label>
+                            <select asp-for="Priority" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                <option value="">نامشخص</option>
+                                <option value="Low">کم</option>
+                                <option value="Medium">متوسط</option>
+                                <option value="High">زیاد</option>
+                                <option value="Urgent">فوری</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                شدت اثر
+                            </label>
+                            <select asp-for="Severity" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                <option value="">نامشخص</option>
+                                <option value="Minor">جزئی</option>
+                                <option value="Major">مهم</option>
+                                <option value="Critical">بحرانی</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                موعد پیگیری
+                            </label>
+                            <input type="date" asp-for="DueDate" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                مسئول
+                            </label>
+                            <select class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" id="assignedToSelect">
+                                <option value="">بدون مسئول</option>
+                                @foreach (var user in Model.ActiveUsers)
+                                {
+                                    <option value="@user.FirstName" data-lastname="@user.LastName">
+                                        @user.FirstName @user.LastName
+                                    </option>
+                                }
+                            </select>
+                            <input type="hidden" asp-for="AssignedToFirstName" id="assignedToFirstName" />
+                            <input type="hidden" asp-for="AssignedToLastName" id="assignedToLastName" />
+                        </div>
+                    </div>
+                </section>
+
+                <details class="border-t border-gray-200 pt-6" id="gitDetails">
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-4">
+                        <span class="flex items-center gap-2">
+                            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-700">
+                                <i class="bi bi-git"></i>
+                            </span>
+                            <span class="text-lg font-semibold text-gray-900">جزئیات فنی و گیت</span>
+                        </span>
+                        <i class="bi bi-chevron-down text-gray-500"></i>
+                    </summary>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Branch
+                            </label>
+                            <input type="text" asp-for="BranchName" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" maxlength="200" placeholder="feature/login" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                نوع آیتم
+                            </label>
+                            <select asp-for="WorkItemType" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                <option value="">انتخاب نشده</option>
+                                <option value="Issue">Issue</option>
+                                <option value="Pull Request">Pull Request</option>
+                                <option value="Merge Request">Merge Request</option>
+                                <option value="Commit">Commit</option>
+                                <option value="Pipeline">Pipeline</option>
+                                <option value="Release">Release</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                وضعیت گیت
+                            </label>
+                            <select asp-for="GitStatus" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                <option value="">انتخاب نشده</option>
+                                <option value="Opened">باز</option>
+                                <option value="In Progress">در حال انجام</option>
+                                <option value="Reviewed">بازبینی شده</option>
+                                <option value="Merged">Merge شده</option>
+                                <option value="Closed">بسته شده</option>
+                                <option value="Failed">ناموفق</option>
+                                <option value="Deployed">استقرار یافته</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Repository URL
+                            </label>
+                            <input type="url" asp-for="RepositoryUrl" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" maxlength="1000" placeholder="https://github.com/org/repo" />
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Commit / Merge URL
+                            </label>
+                            <input type="url" asp-for="CommitUrl" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" maxlength="1000" placeholder="https://github.com/org/repo/commit/..." />
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-end gap-3 px-5 md:px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
+                <a href="@Url.Action("Index", "Issues")" class="px-6 py-2.5 bg-white hover:bg-gray-100 text-gray-800 font-medium rounded-lg border border-gray-300 transition-colors duration-200 text-center">
+                    <i class="bi bi-x-circle ml-2"></i>انصراف
+                </a>
+                <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm">
+                    <i class="bi bi-check-circle ml-2"></i>ثبت درخواست
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const assignedToSelect = document.getElementById('assignedToSelect');
+    const reportedChannelSelect = document.getElementById('reportedChannelSelect');
+    const reportedChannelUrlGroup = document.getElementById('reportedChannelUrlGroup');
+    const reportedChannelUrlInput = document.getElementById('reportedChannelUrlInput');
+    const gitDetails = document.getElementById('gitDetails');
+
+    assignedToSelect?.addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        document.getElementById('assignedToFirstName').value = selectedOption.value || '';
+        document.getElementById('assignedToLastName').value = selectedOption.getAttribute('data-lastname') || '';
+    });
+
+    function syncReportedChannelUrl() {
+        const hasChannel = Boolean(reportedChannelSelect?.value);
+        reportedChannelUrlGroup?.classList.toggle('hidden', !hasChannel);
+        if (!hasChannel && reportedChannelUrlInput) {
+            reportedChannelUrlInput.value = '';
+        }
+    }
+
+    reportedChannelSelect?.addEventListener('change', syncReportedChannelUrl);
+    syncReportedChannelUrl();
+
+    if (gitDetails) {
+        const gitInputs = gitDetails.querySelectorAll('input, select');
+        gitDetails.open = Array.from(gitInputs).some(input => input.value);
+    }
+</script>

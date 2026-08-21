@@ -1,0 +1,31 @@
+# Build results
+bin/
+obj/
+publish/
+publish-iis/
+*.zip
+
+# IDE / tooling
+.vs/
+*.user
+*.suo
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Secrets / local config (توکن‌ها و تنظیمات محرمانه)
+appsettings.json
+appsettings.*.json
+!appsettings.example.json
+
+# Runtime data (دیتابیس و داده‌های واقعی - نباید در گیت باشند)
+Data/*.db
+Data/*.db-shm
+Data/*.db-wal
+Data/config.json
+Data/activity_records.json
+
+# User-uploaded content
+/wwwroot/uploads/

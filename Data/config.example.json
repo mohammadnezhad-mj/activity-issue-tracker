@@ -1,0 +1,11 @@
+{
+  "Names": [],
+  "ActivityTypes": [],
+  "Results": [],
+  "SoftwareNames": [],
+  "IssueTypes": [],
+  "RateLimitSettings": {
+    "MaxRequests": 500,
+    "TimeWindowMinutes": 15
+  }
+}

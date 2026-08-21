@@ -1,0 +1,16 @@
+﻿/* IRANSansX FaNum */
+@font-face {
+  font-family: 'IRANSansXFaNum';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/iran-sans/IRANSansXFaNum-Regular.woff2') format('woff2');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IRANSansXFaNum';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/fonts/iran-sans/IRANSansXFaNum-Bold.woff2') format('woff2');
+  font-display: swap;
+}

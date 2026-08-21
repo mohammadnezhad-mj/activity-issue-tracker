@@ -1,0 +1,131 @@
+﻿@model RayanTask.Models.ConfigurationData
+
+@{
+    ViewData["Title"] = "ورود به سیستم";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <meta name="theme-color" content="#667eea" />
+    <title>@ViewData["Title"]</title>
+    <script src="~/lib/tailwind/tailwind.min.js" asp-append-version="true"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/fonts/iran-sans/fontiran.css" asp-append-version="true" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#667eea',
+                    },
+                    fontFamily: {
+                        sans: ['IRANSansXFaNum', 'Tahoma', 'Arial', 'sans-serif']
+                    }
+                }
+            }
+        }
+        // RTL Support for Tailwind
+        if (document.documentElement.dir === 'rtl') {
+            document.documentElement.classList.add('rtl');
+        }
+    </script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-5">
+    <div class="bg-white rounded-3xl shadow-2xl p-8 md:p-10 w-full max-w-md animate-fade-in">
+        <div class="text-center mb-8">
+            <i class="bi bi-shield-lock text-6xl text-indigo-600 mb-4"></i>
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">ورود به سیستم</h2>
+            <p class="text-gray-600">لطفاً نام و نام خانوادگی و رمز عبور را وارد کنید</p>
+        </div>
+
+        @if (ViewBag.ErrorMessage != null)
+        {
+            <div class="mb-6 bg-red-50 border-r-4 border-red-500 text-red-800 px-4 py-3 rounded-lg flex items-center gap-3">
+                <i class="bi bi-exclamation-triangle-fill text-xl"></i>
+                <span>@ViewBag.ErrorMessage</span>
+            </div>
+        }
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="mb-6 bg-green-50 border-r-4 border-green-500 text-green-800 px-4 py-3 rounded-lg flex items-center gap-3">
+                <i class="bi bi-check-circle-fill text-xl"></i>
+                <span>@TempData["SuccessMessage"]</span>
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="mb-6 bg-red-50 border-r-4 border-red-500 text-red-800 px-4 py-3 rounded-lg flex items-center gap-3">
+                <i class="bi bi-exclamation-triangle-fill text-xl"></i>
+                <span>@TempData["ErrorMessage"]</span>
+            </div>
+        }
+
+        <form asp-action="Login" method="post">
+            @Html.AntiForgeryToken()
+            
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                    <i class="bi bi-person text-indigo-600"></i>
+                    نام و نام خانوادگی
+                </label>
+                <input type="text" name="fullName" list="fullNameList" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" required placeholder="نام و نام خانوادگی را وارد کنید" autocomplete="off" />
+                <datalist id="fullNameList">
+                    @foreach (var name in Model.Names)
+                    {
+                        <option value="@name.FirstName @name.LastName"></option>
+                    }
+                </datalist>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                    <i class="bi bi-key text-indigo-600"></i>
+                    رمز عبور
+                </label>
+                <input type="password" name="password" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" required placeholder="رمز عبور را وارد کنید" autocomplete="current-password" />
+            </div>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                <i class="bi bi-box-arrow-in-right ml-2"></i>
+                ورود
+            </button>
+
+            <div class="mt-4 text-center">
+                <a asp-action="ForgotPassword" class="text-indigo-600 hover:text-indigo-800 font-medium text-sm">
+                    رمز عبور را فراموش کرده‌اید؟
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <script src="~/lib/jquery/jquery-3.7.0.min.js" asp-append-version="true"></script>
+    <style>
+        body, button, input, select, textarea {
+            font-family: 'IRANSansXFaNum', Tahoma, Arial, sans-serif;
+        }
+        @@keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.5s ease-out;
+        }
+    </style>
+</body>
+</html>
+
+
+
+
