@@ -1,129 +1,128 @@
-# راهنمای امنیتی - سیستم مدیریت فعالیت‌ها
+# Security Guide - Activity Management System
 
-این سند شامل نکات امنیتی پیاده‌سازی شده در سیستم است.
+This document describes the security measures implemented in the system.
 
-## ✅ موارد امنیتی پیاده‌سازی شده
+## ✅ Implemented Security Measures
 
 ### 1. **HTTPS Enforcement**
-- تمام ارتباطات در محیط Production از HTTPS استفاده می‌کنند
-- HSTS (HTTP Strict Transport Security) فعال است
-- Redirect خودکار از HTTP به HTTPS
+- All communication in the Production environment uses HTTPS
+- HSTS (HTTP Strict Transport Security) is enabled
+- Automatic redirect from HTTP to HTTPS
 
 ### 2. **Security Headers**
-- `X-Frame-Options: DENY` - جلوگیری از Clickjacking
-- `X-Content-Type-Options: nosniff` - جلوگیری از MIME sniffing
-- `X-XSS-Protection: 1; mode=block` - محافظت در برابر XSS
-- `Content-Security-Policy` - محدود کردن منابع قابل اجرا
-- `Strict-Transport-Security` - اجباری کردن HTTPS
-- `Referrer-Policy` - کنترل اطلاعات ارسالی در Referrer
+- `X-Frame-Options: DENY` - prevents Clickjacking
+- `X-Content-Type-Options: nosniff` - prevents MIME sniffing
+- `X-XSS-Protection: 1; mode=block` - protects against XSS
+- `Content-Security-Policy` - restricts the resources allowed to execute
+- `Strict-Transport-Security` - enforces HTTPS
+- `Referrer-Policy` - controls information sent in the Referrer
 
 ### 3. **Session Security**
-- Cookie های Session با `HttpOnly` flag (جلوگیری از دسترسی JavaScript)
-- Cookie های Session با `Secure` flag (فقط HTTPS)
-- Cookie های Session با `SameSite=Strict` (محافظت در برابر CSRF)
-- Timeout خودکار Session بعد از 8 ساعت عدم فعالیت
-- نام سفارشی برای Cookie Session
+- Session cookies with the `HttpOnly` flag (prevents JavaScript access)
+- Session cookies with the `Secure` flag (HTTPS only)
+- Session cookies with `SameSite=Strict` (protects against CSRF)
+- Automatic session timeout after 8 hours of inactivity
+- Custom name for the session cookie
 
 ### 4. **Rate Limiting**
-- محدودیت 5 درخواست ورود در هر 15 دقیقه برای هر IP
-- جلوگیری از Brute Force attacks
-- پیام مناسب برای کاربر در صورت محدودیت
+- Limit of 5 login requests per 15 minutes per IP
+- Prevents brute force attacks
+- Appropriate message shown to the user when the limit is reached
 
 ### 5. **Input Validation & Sanitization**
-- بررسی طول ورودی‌ها
-- HTML Encoding برای جلوگیری از XSS
-- Validation در سمت سرور برای تمام ورودی‌ها
-- Whitelist validation برای dropdown ها
+- Input length checks
+- HTML encoding to prevent XSS
+- Server-side validation for all inputs
+- Whitelist validation for dropdowns
 
 ### 6. **Password Security**
-- Hash کردن رمز عبور با SHA256 و Salt منحصر به فرد
-- Salt بر اساس نام و نام خانوادگی کاربر
-- Backward compatibility با رمزهای عبور قدیمی
-- عدم ذخیره رمز عبور به صورت Plain Text
+- Passwords hashed with SHA256 and a unique salt
+- Salt derived from the user's first and last name
+- Backward compatibility with legacy passwords
+- Passwords are never stored as plain text
 
 ### 7. **CSRF Protection**
-- استفاده از `ValidateAntiForgeryToken` در تمام فرم‌های POST
-- Token validation خودکار توسط ASP.NET Core
+- `ValidateAntiForgeryToken` used on all POST forms
+- Automatic token validation by ASP.NET Core
 
 ### 8. **Authorization & Access Control**
-- بررسی دسترسی در تمام Controller ها
+- Access checks in all controllers
 - Session-based authentication
 - Role-based access control (Admin, Regular User)
-- Permission-based access control برای بخش‌های مختلف
+- Permission-based access control for different sections
 
 ### 9. **SQL Injection Protection**
-- استفاده از Entity Framework Core (Parameterized Queries)
-- عدم استفاده از Raw SQL Queries
+- Uses Entity Framework Core (parameterized queries)
+- No raw SQL queries
 - Type-safe queries
 
 ### 10. **Error Handling**
-- عدم نمایش جزئیات خطا به کاربر در Production
-- Logging خطاها برای بررسی توسط مدیر
-- پیام‌های خطای عمومی و کاربرپسند
+- Error details are not shown to the user in Production
+- Errors are logged for administrator review
+- Generic, user-friendly error messages
 
 ### 11. **Audit Logging**
-- ثبت تمام عملیات CRUD
-- ثبت تلاش‌های ناموفق ورود
-- ذخیره اطلاعات کاربر، زمان و نوع عملیات
-- امکان ردیابی تغییرات
+- All CRUD operations are logged
+- Failed login attempts are logged
+- User information, timestamp, and operation type are stored
+- Changes can be traced
 
 ### 12. **XSS Protection**
-- HTML Encoding در تمام خروجی‌های View
-- استفاده از Razor syntax که به صورت خودکار encode می‌کند
-- Sanitization ورودی‌ها قبل از ذخیره
+- HTML encoding on all view output
+- Uses Razor syntax, which encodes automatically
+- Input sanitization before storage
 
-## 🔒 توصیه‌های امنیتی برای استقرار
+## 🔒 Security Recommendations for Deployment
 
 ### 1. **SSL/TLS Certificate**
-- استفاده از گواهینامه SSL معتبر
-- تنظیمات صحیح در IIS یا Web Server
+- Use a valid SSL certificate
+- Configure it correctly in IIS or the web server
 
 ### 2. **Firewall**
-- محدود کردن دسترسی به پورت‌های غیرضروری
-- Whitelist IP addresses در صورت نیاز
+- Restrict access to unnecessary ports
+- Whitelist IP addresses if needed
 
 ### 3. **Database Security**
-- محافظت از فایل SQLite
-- Backup منظم
-- محدود کردن دسترسی به فایل دیتابیس
+- Protect the SQLite file
+- Perform regular backups
+- Restrict access to the database file
 
 ### 4. **Configuration Security**
-- محافظت از فایل `config.json`
-- عدم قرار دادن در public directory
-- استفاده از Environment Variables برای اطلاعات حساس
+- Protect the `config.json` file
+- Do not place it in a public directory
+- Use environment variables for sensitive information
 
 ### 5. **Monitoring**
-- بررسی لاگ‌ها به صورت منظم
-- مانیتورینگ تلاش‌های ناموفق ورود
-- Alert در صورت فعالیت مشکوک
+- Review logs regularly
+- Monitor failed login attempts
+- Alert on suspicious activity
 
 ### 6. **Updates**
-- به‌روزرسانی منظم .NET Runtime
-- به‌روزرسانی پکیج‌های NuGet
-- بررسی Security Advisories
+- Update the .NET Runtime regularly
+- Update NuGet packages
+- Review security advisories
 
 ### 7. **Backup**
-- Backup منظم دیتابیس
-- Backup فایل `config.json`
-- تست Restore به صورت دوره‌ای
+- Perform regular database backups
+- Back up the `config.json` file
+- Test restore procedures periodically
 
-## ⚠️ نکات مهم
+## ⚠️ Important Notes
 
-1. **رمز عبور مدیر سیستم**: از رمز عبور قوی استفاده کنید
-2. **Session Timeout**: در صورت نیاز می‌توانید timeout را کاهش دهید
-3. **Rate Limiting**: در صورت نیاز می‌توانید محدودیت را تنظیم کنید
-4. **Log Retention**: لاگ‌ها را به صورت دوره‌ای پاک کنید تا فضای دیتابیس پر نشود
+1. **Admin password**: use a strong password
+2. **Session timeout**: you can reduce the timeout if needed
+3. **Rate limiting**: you can adjust the limit if needed
+4. **Log retention**: clear logs periodically to avoid filling up the database
 
-## 📝 چک‌لیست قبل از استقرار
+## 📝 Pre-Deployment Checklist
 
-- [ ] SSL Certificate نصب شده
-- [ ] HTTPS فعال است
-- [ ] Security Headers بررسی شده
-- [ ] Rate Limiting فعال است
-- [ ] Session Security تنظیم شده
-- [ ] Database Backup انجام شده
-- [ ] config.json محافظت شده
-- [ ] Firewall تنظیم شده
-- [ ] Monitoring فعال است
-- [ ] Error Logging بررسی شده
-
+- [ ] SSL certificate installed
+- [ ] HTTPS enabled
+- [ ] Security headers verified
+- [ ] Rate limiting enabled
+- [ ] Session security configured
+- [ ] Database backup performed
+- [ ] config.json protected
+- [ ] Firewall configured
+- [ ] Monitoring enabled
+- [ ] Error logging verified

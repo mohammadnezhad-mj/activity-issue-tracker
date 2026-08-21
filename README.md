@@ -1,122 +1,122 @@
-# سیستم مدیریت فعالیت‌ها - نسخه تحت وب
+# Activity Management System - Web Edition
 
-پروژه کامل ASP.NET Core MVC برای مدیریت و ذخیره‌سازی فعالیت‌ها که روی IIS قابل اجرا است.
+A complete ASP.NET Core MVC project for managing and storing activities, deployable on IIS.
 
-## ویژگی‌ها
+## Features
 
-- ✅ برنامه تحت وب ASP.NET Core MVC
-- ✅ ذخیره‌سازی داده‌ها در پایگاه داده **SQLite** (از طریق Entity Framework Core)
-- ✅ مدیریت کاربران، نوع فعالیت و نتایج از طریق پنل ادمین
-- ✅ رابط کاربری Responsive با Bootstrap
-- ✅ اعتبارسنجی ورودی‌ها
-- ✅ پشتیبانی از RTL (راست به چپ) برای فارسی
+- ✅ ASP.NET Core MVC web application
+- ✅ Data storage in a **SQLite** database (via Entity Framework Core)
+- ✅ Management of users, activity types, and results through an admin panel
+- ✅ Responsive UI with Bootstrap
+- ✅ Input validation
+- ✅ RTL (right-to-left) support for Persian
 
-## پایگاه داده
+## Database
 
-این پروژه از **SQLite** استفاده می‌کند (نه فایل JSON). مسیر پیش‌فرض فایل دیتابیس `Data/rayantask.db` است و در اولین اجرای برنامه (`dbContext.Database.Migrate()` در [Program.cs](Program.cs)) به‌صورت خودکار ساخته و Migrationهای لازم روی آن اعمال می‌شود؛ نیازی به اجرای دستی اسکریپت SQL نیست، مگر برای موارد خاص (مستندات آن در [DatabaseScripts/README.md](DatabaseScripts/README.md)).
+This project uses **SQLite** (not a JSON file). The default database file path is `Data/rayantask.db`, and it is automatically created and migrated on the first run of the application (`dbContext.Database.Migrate()` in [Program.cs](Program.cs)); there's no need to run SQL scripts manually, except for special cases (documented in [DatabaseScripts/README.md](DatabaseScripts/README.md)).
 
-می‌توانید مسیر/نوع اتصال را با تنظیم `ConnectionStrings:DefaultConnection` در `appsettings.json` یا متغیر محیطی override کنید:
+You can override the connection path/type by setting `ConnectionStrings:DefaultConnection` in `appsettings.json` or via an environment variable:
 
 ```bash
 ConnectionStrings__DefaultConnection="Data Source=Data/rayantask.db"
 ```
 
-## فیلدهای داده
+## Data Fields
 
-1. **نام و نام خانوادگی**: از جدول `Users` بارگذاری می‌شود
-2. **تاریخ**: پیش‌فرض تاریخ امروز است
-3. **نوع فعالیت**: از جدول `ActivityTypes` بارگذاری می‌شود
-4. **شرح**: حداکثر 1000 کاراکتر
-5. **مدت زمان**: بر حسب دقیقه
-6. **ذی‌نفع / مشتری**: ورودی متنی
-7. **نتیجه**: از جدول `Results` بارگذاری می‌شود
+1. **First and Last Name**: loaded from the `Users` table
+2. **Date**: defaults to today's date
+3. **Activity Type**: loaded from the `ActivityTypes` table
+4. **Description**: up to 1000 characters
+5. **Duration**: in minutes
+6. **Beneficiary / Client**: text input
+7. **Result**: loaded from the `Results` table
 
-## نحوه اجرا
+## How to Run
 
-### اجرای محلی (Development)
+### Local Development
 
 ```bash
 dotnet restore
 dotnet run
 ```
 
-سپس به آدرس `http://localhost:5000` مراجعه کنید.
+Then navigate to `http://localhost:5000`.
 
-### انتشار برای IIS
+### Publishing to IIS
 
-1. **Publish کردن پروژه:**
+1. **Publish the project:**
    ```bash
    dotnet publish -c Release -o ./publish
    ```
 
-2. **نصب ASP.NET Core Hosting Bundle:**
-   - از [microsoft.com](https://dotnet.microsoft.com/download/dotnet/8.0) دانلود و نصب کنید
-   - شامل .NET Runtime و ASP.NET Core Module برای IIS
+2. **Install the ASP.NET Core Hosting Bundle:**
+   - Download and install it from [microsoft.com](https://dotnet.microsoft.com/download/dotnet/8.0)
+   - It includes the .NET Runtime and the ASP.NET Core Module for IIS
 
-3. **تنظیم IIS:**
-   - IIS Manager را باز کنید
-   - یک Application Pool جدید ایجاد کنید:
+3. **Configure IIS:**
+   - Open IIS Manager
+   - Create a new Application Pool:
      - .NET CLR Version: No Managed Code
      - Managed Pipeline Mode: Integrated
-   - یک Website یا Application جدید ایجاد کنید:
-     - Physical Path: مسیر پوشه `publish`
-     - Application Pool: همان Application Pool که ایجاد کردید
-     - Binding: پورت و hostname مورد نظر
+   - Create a new Website or Application:
+     - Physical Path: the path to the `publish` folder
+     - Application Pool: the Application Pool you just created
+     - Binding: the desired port and hostname
 
-4. **تنظیمات امنیتی:**
-   - اطمینان حاصل کنید که IIS_IUSRS و Application Pool Identity دسترسی خواندن/نوشتن به پوشه `Data` دارند
+4. **Security settings:**
+   - Make sure IIS_IUSRS and the Application Pool Identity have read/write access to the `Data` folder
 
-5. **تست:**
-   - به آدرس تنظیم شده در IIS مراجعه کنید
+5. **Test:**
+   - Navigate to the address configured in IIS
 
-## ساختار پروژه
+## Project Structure
 
 ```
 RayanTask/
-├── Controllers/          # کنترلرهای MVC
-├── Models/              # مدل‌های داده
-├── Services/            # سرویس‌های کسب و کار
-├── Views/               # صفحات Razor
-├── wwwroot/             # فایل‌های استاتیک
-├── Data/                # فایل دیتابیس SQLite (rayantask.db)
-├── Migrations/          # Migrationهای EF Core
-├── DatabaseScripts/     # نسخه‌ی SQL خام همان Migrationها (برای اجرای دستی)
-├── Properties/          # تنظیمات پروژه
-├── Program.cs           # نقطه ورود برنامه
-└── web.config           # تنظیمات IIS
+├── Controllers/          # MVC controllers
+├── Models/              # Data models
+├── Services/            # Business logic services
+├── Views/               # Razor pages
+├── wwwroot/             # Static files
+├── Data/                # SQLite database file (rayantask.db)
+├── Migrations/          # EF Core migrations
+├── DatabaseScripts/     # Raw SQL version of the same migrations (for manual execution)
+├── Properties/          # Project settings
+├── Program.cs           # Application entry point
+└── web.config           # IIS configuration
 ```
 
-## ویرایش تنظیمات (نام‌ها، نوع فعالیت، نتایج)
+## Editing Settings (Names, Activity Types, Results)
 
-نام‌ها، نوع فعالیت‌ها و نتایج دیگر از فایل JSON خوانده نمی‌شوند و از طریق پنل ادمین (`/Admin`) در دیتابیس مدیریت می‌شوند. برای دسترسی به پنل ادمین باید یک کاربر با `IsAdmin = true` داشته باشید — به بخش «ساخت اولین کاربر ادمین» مراجعه کنید.
+Names, activity types, and results are no longer read from a JSON file — they are managed in the database through the admin panel (`/Admin`). To access the admin panel you need a user with `IsAdmin = true` — see the "Creating the First Admin User" section below.
 
-## نیازمندی‌ها
+## Requirements
 
 - .NET 8.0 SDK
-- IIS 10 یا بالاتر (برای اجرا روی IIS)
+- IIS 10 or later (for running on IIS)
 - ASP.NET Core Hosting Bundle 8.0
 
-## راه‌اندازی تنظیمات محلی
+## Local Configuration Setup
 
-فایل‌های تنظیمات و داده‌های واقعی (شامل توکن‌ها) در گیت قرار ندارند. قبل از اجرا:
+Configuration files and real data (including tokens) are not stored in git. Before running:
 
 ```bash
 cp appsettings.example.json appsettings.json
 cp Data/config.example.json Data/config.json
 ```
 
-سپس مقادیر واقعی (مثل `Telegram:BotToken` و `Telegram:ChatId`) را در `appsettings.json` وارد کنید. این مقادیر همچنین از طریق متغیرهای محیطی هم قابل تنظیم هستند، مثلاً:
+Then enter the real values (e.g. `Telegram:BotToken` and `Telegram:ChatId`) in `appsettings.json`. These values can also be set via environment variables, for example:
 
 ```bash
 Telegram__BotToken=your-token
 Telegram__ChatId=your-chat-id
 ```
 
-## ساخت اولین کاربر ادمین
+## Creating the First Admin User
 
-سیستم صفحه‌ی ثبت‌نام عمومی ندارد؛ کاربران فقط توسط ادمین از داخل پنل ساخته می‌شوند. بنابراین **اولین** کاربر ادمین باید مستقیماً در دیتابیس SQLite ساخته شود.
+The system has no public registration page; users can only be created by an admin from within the panel. Therefore, the **first** admin user must be created directly in the SQLite database.
 
-رمز عبور در جدول `Users` به‌صورت `SHA256(password + "_" + SHA256("RayanTask_{FirstName}_{LastName}_Salt2024"))` (خروجی hex بزرگ) ذخیره می‌شود (پیاده‌سازی در [Helpers/PasswordHelper.cs](Helpers/PasswordHelper.cs)). برای تولید همین hash می‌توانید از دستور PowerShell زیر استفاده کنید:
+Passwords are stored in the `Users` table as `SHA256(password + "_" + SHA256("RayanTask_{FirstName}_{LastName}_Salt2024"))` (uppercase hex output) (implemented in [Helpers/PasswordHelper.cs](Helpers/PasswordHelper.cs)). You can use the following PowerShell command to generate the same hash:
 
 ```powershell
 function Get-RayanTaskPasswordHash {
@@ -127,10 +127,10 @@ function Get-RayanTaskPasswordHash {
     & $toHex $sha256.ComputeHash([Text.Encoding]::UTF8.GetBytes("${Password}_${salt}"))
 }
 
-Get-RayanTaskPasswordHash -Password "YourStrongPassword" -FirstName "مدیر" -LastName "سیستم"
+Get-RayanTaskPasswordHash -Password "YourStrongPassword" -FirstName "Admin" -LastName "System"
 ```
 
-سپس hash خروجی را در دستور زیر جایگزین `<HASH>` کنید و روی فایل دیتابیس اجرا کنید (اگر برنامه را حداقل یک‌بار اجرا کرده باشید، `Data/rayantask.db` و جدول `Users` از قبل توسط Migrate خودکار ساخته شده‌اند):
+Then replace `<HASH>` in the command below with the resulting hash and run it against the database file (if you've run the application at least once, `Data/rayantask.db` and the `Users` table have already been created automatically by Migrate):
 
 ```bash
 sqlite3 Data/rayantask.db "INSERT INTO Users
@@ -139,18 +139,18 @@ sqlite3 Data/rayantask.db "INSERT INTO Users
    CanViewLogs, CanViewIssueDetails, CanEditIssues, CanDeleteIssues, CanDeleteReports,
    CanViewActivityList, CreatedAt)
 VALUES
-  ('مدیر', 'سیستم', '<HASH>', 1, 1, 1, 1,
+  ('Admin', 'System', '<HASH>', 1, 1, 1, 1,
    1, 1, 1, 1, 1,
    1, 1, 1, 1, 1,
    1, datetime('now'));"
 ```
 
-بعد از این، با نام و نام خانوادگی `مدیر سیستم` و رمز عبوری که برای هش انتخاب کردید وارد شوید؛ از همان‌جا می‌توانید بقیه‌ی کاربران را از پنل ادمین بسازید.
+After this, log in with the first/last name `Admin System` and the password you chose for the hash; from there you can create the rest of the users from the admin panel.
 
-## مشارکت (Contributing)
+## Contributing
 
-این پروژه متن‌باز است و از Fork و Pull Request استقبال می‌شود. لطفاً پیش از ارسال تغییرات بزرگ، ابتدا یک Issue باز کنید تا درباره‌ی رویکرد هماهنگ شویم.
+This project is open source and welcomes forks and pull requests. Please open an Issue before submitting large changes so we can align on the approach.
 
-## لایسنس
+## License
 
-این پروژه تحت [MIT License](LICENSE) منتشر شده است.
+This project is released under the [MIT License](LICENSE).
