@@ -39,7 +39,7 @@
         <div class="text-center mb-8">
             <i class="bi bi-shield-lock text-6xl text-indigo-600 mb-4"></i>
             <h2 class="text-3xl font-bold text-gray-900 mb-2">ورود به سیستم</h2>
-            <p class="text-gray-600">لطفاً نام و نام خانوادگی و رمز عبور را وارد کنید</p>
+            <p class="text-gray-600">لطفاً نام و رمز عبور را وارد کنید</p>
         </div>
 
         @if (ViewBag.ErrorMessage != null)
@@ -72,15 +72,9 @@
             <div class="mb-6">
                 <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                     <i class="bi bi-person text-indigo-600"></i>
-                    نام و نام خانوادگی
+                    نام
                 </label>
-                <input type="text" name="fullName" list="fullNameList" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" required placeholder="نام و نام خانوادگی را وارد کنید" autocomplete="off" />
-                <datalist id="fullNameList">
-                    @foreach (var name in Model.Names)
-                    {
-                        <option value="@name.FirstName @name.LastName"></option>
-                    }
-                </datalist>
+                <input type="text" name="firstName" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" required placeholder="نام خود را وارد کنید" autocomplete="off" autocapitalize="off" spellcheck="false" />
             </div>
 
             <div class="mb-6">

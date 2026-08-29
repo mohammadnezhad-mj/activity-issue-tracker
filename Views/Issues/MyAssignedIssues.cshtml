@@ -102,6 +102,18 @@
                                     </small>
                                     <strong class="text-gray-900">@issue.ReporterFirstName @issue.ReporterLastName</strong>
                                 </div>
+                                @{
+                                    var prevAssignee = Model.PreviousAssignee.TryGetValue(issue.Id, out var pa) ? pa : null;
+                                }
+                                @if (!string.IsNullOrWhiteSpace(prevAssignee))
+                                {
+                                    <div>
+                                        <small class="text-gray-500 block mb-1 flex items-center gap-1">
+                                            <i class="bi bi-person-dash"></i> مسئول قبلی:
+                                        </small>
+                                        <strong class="text-gray-900">@prevAssignee</strong>
+                                    </div>
+                                }
                                 <div>
                                     <small class="text-gray-500 block mb-1 flex items-center gap-1">
                                         <i class="bi bi-calendar"></i> زمان ثبت:
