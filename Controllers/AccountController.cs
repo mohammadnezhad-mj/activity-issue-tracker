@@ -53,43 +53,20 @@ public class AccountController : BaseController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Login(string fullName, string password)
+    public IActionResult Login(string firstName, string password)
     {
         var config = _dataService.LoadConfiguration();
-        
-        // جدا کردن نام و نام خانوادگی
-        if (string.IsNullOrWhiteSpace(fullName))
+
+        if (string.IsNullOrWhiteSpace(firstName))
         {
-            ViewBag.ErrorMessage = "لطفاً نام و نام خانوادگی را انتخاب کنید.";
+            ViewBag.ErrorMessage = "لطفاً نام را وارد کنید.";
             return View(config);
         }
+        firstName = firstName.Trim();
 
-        var nameParts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (nameParts.Length < 2)
-        {
-            ViewBag.ErrorMessage = "لطفاً نام و نام خانوادگی را به درستی انتخاب کنید.";
-            return View(config);
-        }
-
-        var firstName = nameParts[0];
-        var lastName = string.Join(" ", nameParts.Skip(1));
-        
-        // بررسی وجود کاربر در دیتابیس (فقط کاربران فعال)
-        var user = _context.Users.FirstOrDefault(u => 
-            u.FirstName == firstName && u.LastName == lastName && u.IsActive);
-
-        if (user == null)
-        {
-            // Log failed login attempt
-            LogFailedLoginAttempt($"{firstName} {lastName}", _logger);
-            ViewBag.ErrorMessage = "نام و نام خانوادگی یا رمز عبور صحیح نیست.";
-            return View(config);
-        }
-
-        // بررسی رمز عبور کاربر
         if (string.IsNullOrWhiteSpace(password))
         {
-            LogFailedLoginAttempt($"{firstName} {lastName}", _logger);
+            LogFailedLoginAttempt(firstName, _logger);
             ViewBag.ErrorMessage = "لطفاً رمز عبور را وارد کنید.";
             return View(config);
         }
@@ -97,42 +74,41 @@ public class AccountController : BaseController
         // بررسی طول رمز عبور (حداکثر 100 کاراکتر)
         if (password.Length > 100)
         {
-            LogFailedLoginAttempt($"{firstName} {lastName}", _logger);
+            LogFailedLoginAttempt(firstName, _logger);
             ViewBag.ErrorMessage = "رمز عبور معتبر نیست.";
             return View(config);
         }
 
-        // بررسی رمز عبور از دیتابیس
-        bool passwordValid = PasswordHelper.VerifyPassword(password, user.Password, firstName, lastName);
-        
-        if (!passwordValid)
+        // بررسی وجود کاربر در دیتابیس (فقط کاربران فعال) - ورود فقط بر اساس نام
+        // ممکن است چند کاربر فعال نام یکسان داشته باشند، بنابراین رمز عبور برای هرکدام بررسی می‌شود
+        var candidates = _context.Users.Where(u => u.FirstName == firstName && u.IsActive).ToList();
+
+        User? user = null;
+        foreach (var candidate in candidates)
         {
-            // Log failed login attempt
-            LogFailedLoginAttempt($"{firstName} {lastName}", _logger);
-            ViewBag.ErrorMessage = "نام و نام خانوادگی یا رمز عبور صحیح نیست.";
+            if (PasswordHelper.VerifyPassword(password, candidate.Password, candidate.Id, candidate.FirstName, candidate.LastName))
+            {
+                user = candidate;
+                break;
+            }
+        }
+
+        if (user == null)
+        {
+            LogFailedLoginAttempt(firstName, _logger);
+            ViewBag.ErrorMessage = "نام یا رمز عبور صحیح نیست.";
             return View(config);
         }
 
-        // اگر password به صورت plain text بود یا hash قدیمی (بدون salt)، آن را hash کن با salt و ذخیره کن
-        if (!PasswordHelper.IsHashed(user.Password))
+        // رمز عبور را به فرمت قانونی مبتنی بر شناسه‌ی کاربر ارتقا بده (اگر قبلاً plain text، hash قدیمی بدون salt،
+        // یا hash قدیمی بر اساس نام بوده). چون salt بر اساس شناسه‌ی ثابت کاربر است، تغییر بعدی نام/نام‌خانوادگی
+        // دیگر باعث نامعتبر شدن رمز عبور نمی‌شود.
+        var canonicalHash = PasswordHelper.HashPassword(password, user.Id);
+        if (!canonicalHash.Equals(user.Password, StringComparison.OrdinalIgnoreCase))
         {
-            // Plain text - hash کن با salt
-            user.Password = PasswordHelper.HashPassword(user.Password, firstName, lastName);
+            user.Password = canonicalHash;
             user.UpdatedAt = DateTime.Now;
             _context.SaveChanges();
-        }
-        else
-        {
-            // بررسی اینکه آیا hash قدیمی است (بدون salt) یا جدید (با salt)
-            // اگر hash قدیمی است، آن را به hash جدید با salt تبدیل کن
-            var testHashLegacy = PasswordHelper.HashPasswordLegacy(password);
-            if (testHashLegacy.Equals(user.Password, StringComparison.OrdinalIgnoreCase))
-            {
-                // Hash قدیمی است - به hash جدید با salt تبدیل کن
-                user.Password = PasswordHelper.HashPassword(password, firstName, lastName);
-                user.UpdatedAt = DateTime.Now;
-                _context.SaveChanges();
-            }
         }
 
         // ذخیره در Session
@@ -308,12 +284,19 @@ public class AccountController : BaseController
         }
 
         var user = request.User;
-        if (!PasswordHelper.VerifySecurityAnswer(securityAnswer, user.SecurityAnswerHash, user.FirstName, user.LastName))
+        if (!PasswordHelper.VerifySecurityAnswer(securityAnswer, user.SecurityAnswerHash, user.Id, user.FirstName, user.LastName))
         {
             ViewBag.ErrorMessage = "جواب سوال امنیتی صحیح نیست.";
             ViewBag.RequestToken = requestToken;
             ViewBag.SecurityQuestion = request.User.SecurityQuestion ?? "";
             return View();
+        }
+
+        // ارتقای hash جواب سوال امنیتی به فرمت مبتنی بر شناسه‌ی کاربر (در صورتی که از fallback قدیمی تأیید شده باشد)
+        var canonicalAnswerHash = PasswordHelper.HashSecurityAnswer(securityAnswer, user.Id);
+        if (!canonicalAnswerHash.Equals(user.SecurityAnswerHash, StringComparison.OrdinalIgnoreCase))
+        {
+            user.SecurityAnswerHash = canonicalAnswerHash;
         }
 
         // حذف درخواست و توکن‌های قبلی این کاربر
@@ -427,7 +410,7 @@ public class AccountController : BaseController
         }
 
         var user = resetToken.User;
-        user.Password = PasswordHelper.HashPassword(newPassword, user.FirstName, user.LastName);
+        user.Password = PasswordHelper.HashPassword(newPassword, user.Id);
         user.UpdatedAt = DateTime.Now;
 
         _context.PasswordResetTokens.Remove(resetToken);
@@ -534,7 +517,7 @@ public class AccountController : BaseController
         }
 
         user.SecurityQuestion = securityQuestion.Trim();
-        user.SecurityAnswerHash = PasswordHelper.HashSecurityAnswer(securityAnswer.Trim(), firstName, lastName);
+        user.SecurityAnswerHash = PasswordHelper.HashSecurityAnswer(securityAnswer.Trim(), user.Id);
         user.UpdatedAt = DateTime.Now;
         _context.SaveChanges();
 
@@ -599,21 +582,21 @@ public class AccountController : BaseController
         }
 
         // بررسی رمز عبور فعلی
-        if (!PasswordHelper.VerifyPassword(currentPassword, user.Password, firstName, lastName))
+        if (!PasswordHelper.VerifyPassword(currentPassword, user.Password, user.Id, firstName, lastName))
         {
             ViewBag.ErrorMessage = "رمز عبور فعلی صحیح نیست.";
             return View();
         }
 
         // بررسی اینکه رمز جدید با رمز فعلی یکسان نباشد
-        if (PasswordHelper.VerifyPassword(newPassword, user.Password, firstName, lastName))
+        if (PasswordHelper.VerifyPassword(newPassword, user.Password, user.Id, firstName, lastName))
         {
             ViewBag.ErrorMessage = "رمز عبور جدید باید با رمز عبور فعلی متفاوت باشد.";
             return View();
         }
 
         // تغییر رمز عبور
-        user.Password = PasswordHelper.HashPassword(newPassword, firstName, lastName);
+        user.Password = PasswordHelper.HashPassword(newPassword, user.Id);
         user.UpdatedAt = DateTime.Now;
         _context.SaveChanges();
 

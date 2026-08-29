@@ -89,18 +89,11 @@ public class AdminController : BaseController
             return View(user);
         }
 
-        // Hash کردن رمز عبور
-        var hashedPassword = string.Empty;
-        if (!string.IsNullOrWhiteSpace(user.Password))
-        {
-            hashedPassword = PasswordHelper.HashPassword(user.Password, user.FirstName, user.LastName);
-        }
-
         var newUser = new User
         {
             FirstName = user.FirstName,
             LastName = user.LastName,
-            Password = hashedPassword,
+            Password = string.Empty,
             IsAdmin = user.IsAdmin,
             CanEdit = user.CanEdit,
             CanDelete = user.CanDelete,
@@ -121,6 +114,13 @@ public class AdminController : BaseController
 
         _context.Users.Add(newUser);
         _context.SaveChanges();
+
+        // Hash کردن رمز عبور - بعد از SaveChanges چون salt بر اساس شناسه‌ی (Id) کاربر است
+        if (!string.IsNullOrWhiteSpace(user.Password))
+        {
+            newUser.Password = PasswordHelper.HashPassword(user.Password, newUser.Id);
+            _context.SaveChanges();
+        }
 
         _logService.LogAction(
             GetCurrentUserFirstName(),
@@ -212,7 +212,7 @@ public class AdminController : BaseController
         // اگر رمز عبور جدید وارد شده، آن را hash کن
         if (!string.IsNullOrWhiteSpace(newPassword))
         {
-            existingUser.Password = PasswordHelper.HashPassword(newPassword, user.FirstName, user.LastName);
+            existingUser.Password = PasswordHelper.HashPassword(newPassword, existingUser.Id);
         }
 
         existingUser.UpdatedAt = DateTime.Now;

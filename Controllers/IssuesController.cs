@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 using RayanTask.Data;
 using RayanTask.Models;
 using RayanTask.Services;
@@ -23,6 +24,32 @@ public class IssuesController : BaseController
         ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"
     };
     private static readonly FileExtensionContentTypeProvider ContentTypeProvider = new();
+    private static readonly Regex QuickAssignLogRegex = new(@"مسئول از '(?<old>[^']*)' به '(?<new>[^']*)' تغییر کرد", RegexOptions.Compiled);
+    private static readonly Regex UpdateAssignLogRegex = new(@"تغییر مسئول:\s*از (?<old>.*?) به (?<new>[^,]+)", RegexOptions.Compiled);
+
+    // آخرین مسئولی که پیش از مسئول فعلی، مشکل دستش بوده (استخراج از لاگ تغییرات)
+    private static string? ExtractPreviousAssignee(IEnumerable<AuditLog> assignmentLogsDescending)
+    {
+        foreach (var log in assignmentLogsDescending)
+        {
+            var match = log.Action switch
+            {
+                "QuickAssign" => QuickAssignLogRegex.Match(log.Description),
+                "Update" => UpdateAssignLogRegex.Match(log.Description),
+                _ => Match.Empty
+            };
+
+            if (match.Success)
+            {
+                var oldValue = match.Groups["old"].Value.Trim();
+                if (!string.IsNullOrWhiteSpace(oldValue) && oldValue != "بدون مسئول")
+                {
+                    return oldValue;
+                }
+            }
+        }
+        return null;
+    }
 
     private readonly ApplicationDbContext _context;
     private readonly DataService _dataService;
@@ -385,6 +412,18 @@ public class IssuesController : BaseController
                 ? lastCommentAt
                 : issue.CreatedAt);
 
+        // مسئول قبلی هر Issue (از لاگ تغییرات مسئول)
+        var issueIdStrings = issueIds.Select(i => i.ToString()).ToList();
+        var assignmentLogsByIssue = _context.AuditLogs
+            .Where(l => l.EntityType == "SoftwareIssue" && issueIdStrings.Contains(l.EntityId) && (l.Action == "QuickAssign" || l.Action == "Update"))
+            .OrderByDescending(l => l.Timestamp)
+            .ToList()
+            .GroupBy(l => l.EntityId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+        var previousAssignee = issueIds.ToDictionary(
+            id => id,
+            id => assignmentLogsByIssue.TryGetValue(id.ToString(), out var logs) ? ExtractPreviousAssignee(logs) : null);
+
         // خواندن از دیتابیس به جای JSON
         var activeUsers = _context.Users
             .Where(u => u.IsActive)
@@ -435,6 +474,7 @@ public class IssuesController : BaseController
             SoftwareNames = softwareNames,
             StatusOptions = statusOptions,
             LastActivityAt = lastActivityAt,
+            PreviousAssignee = previousAssignee,
             OpenCount = openCount,
             UnassignedCount = unassignedCount,
             UrgentCount = urgentCount,
@@ -493,6 +533,11 @@ public class IssuesController : BaseController
             .Where(u => u.IsActive)
             .Select(u => new NameItem { FirstName = u.FirstName, LastName = u.LastName, IsActive = u.IsActive })
             .ToList();
+        var activeIssueUsers = _context.Users
+            .Where(u => u.IsActive)
+            .OrderBy(u => u.FirstName)
+            .ThenBy(u => u.LastName)
+            .ToList();
         var statusOptions = _context.Statuses
             .Where(s => s.IsActive)
             .Select(s => s.Value)
@@ -500,6 +545,12 @@ public class IssuesController : BaseController
 
         var canEditIssues = HttpContext.Session.GetString("CanEditIssues") == "true";
         var canDeleteIssues = HttpContext.Session.GetString("CanDeleteIssues") == "true";
+
+        // لاگ‌های مربوط به همین Issue (برای همه کاربران قابل مشاهده است)
+        var issueLogs = _logService.GetLogsByEntity("SoftwareIssue", id.ToString());
+
+        // مسئول قبلی (از لاگ تغییرات مسئول)
+        var previousAssignee = ExtractPreviousAssignee(issueLogs.Where(l => l.Action == "QuickAssign" || l.Action == "Update"));
 
         var viewModel = new IssueDetailsViewModel
         {
@@ -509,10 +560,13 @@ public class IssuesController : BaseController
             CanEditIssues = canEditIssues,
             CanDeleteIssues = canDeleteIssues,
             ActiveUsers = activeUsers,
+            ActiveIssueUsers = activeIssueUsers,
             StatusOptions = statusOptions,
             Comments = comments,
             Attachments = attachments,
-            CommentAttachments = commentAttachments
+            CommentAttachments = commentAttachments,
+            Logs = issueLogs,
+            PreviousAssignee = previousAssignee
         };
 
         return View(viewModel);
@@ -1405,10 +1459,23 @@ public class IssuesController : BaseController
 
         ViewBag.Comments = comments;
 
+        // مسئول قبلی هر Issue (از لاگ تغییرات مسئول)
+        var issueIdStrings = issueIds.Select(i => i.ToString()).ToList();
+        var assignmentLogsByIssue = _context.AuditLogs
+            .Where(l => l.EntityType == "SoftwareIssue" && issueIdStrings.Contains(l.EntityId) && (l.Action == "QuickAssign" || l.Action == "Update"))
+            .OrderByDescending(l => l.Timestamp)
+            .ToList()
+            .GroupBy(l => l.EntityId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+        var previousAssignee = issueIds.ToDictionary(
+            id => id,
+            id => assignmentLogsByIssue.TryGetValue(id.ToString(), out var logs) ? ExtractPreviousAssignee(logs) : null);
+
         var viewModel = new MyAssignedIssuesViewModel
         {
             Issues = issues,
-            StatusOptions = new List<string> { "ثبت شده", "در حال بررسی", "در حال انجام", "تکمیل شده", "لغو شده" }
+            StatusOptions = new List<string> { "ثبت شده", "در حال بررسی", "در حال انجام", "تکمیل شده", "لغو شده" },
+            PreviousAssignee = previousAssignee
         };
 
         return View(viewModel);
@@ -1716,6 +1783,7 @@ public class IssuesIndexViewModel
     public List<string> SoftwareNames { get; set; } = new();
     public List<string> StatusOptions { get; set; } = new();
     public Dictionary<int, DateTime> LastActivityAt { get; set; } = new();
+    public Dictionary<int, string?> PreviousAssignee { get; set; } = new();
 }
 
 public class IssueDetailsViewModel
@@ -1726,10 +1794,13 @@ public class IssueDetailsViewModel
     public bool CanEditIssues { get; set; }
     public bool CanDeleteIssues { get; set; }
     public List<NameItem> ActiveUsers { get; set; } = new();
+    public List<User> ActiveIssueUsers { get; set; } = new();
     public List<string> StatusOptions { get; set; } = new();
     public List<IssueComment> Comments { get; set; } = new();
     public List<IssueAttachment> Attachments { get; set; } = new();
     public Dictionary<int, List<CommentAttachment>> CommentAttachments { get; set; } = new();
+    public List<AuditLog> Logs { get; set; } = new();
+    public string? PreviousAssignee { get; set; }
 }
 
 public class CreateIssueViewModel
@@ -1774,4 +1845,5 @@ public class MyAssignedIssuesViewModel
 {
     public List<SoftwareIssue> Issues { get; set; } = new();
     public List<string> StatusOptions { get; set; } = new();
+    public Dictionary<int, string?> PreviousAssignee { get; set; } = new();
 }
